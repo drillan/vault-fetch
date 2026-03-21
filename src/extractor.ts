@@ -96,5 +96,9 @@ export function extractContent(html: string, url: string): string {
     throw new Error("Readability failed to extract content from the page");
   }
 
+  if (!article.content) {
+    throw new Error("Readability returned empty content for the page");
+  }
+
   return article.content;
 }
