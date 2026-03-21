@@ -70,4 +70,29 @@ describe("resolveConfig", () => {
     expect(config.dest).not.toContain("~");
     expect(config.dest).toContain("Documents/Vault");
   });
+
+  it("throws on non-numeric VAULT_FETCH_TIMEOUT", () => {
+    process.env.VAULT_FETCH_TIMEOUT = "abc";
+    expect(() => resolveConfig({ dest: "/vault" }, undefined)).toThrow(
+      "Invalid VAULT_FETCH_TIMEOUT",
+    );
+  });
+
+  it("throws on invalid waitUntil value", () => {
+    expect(() =>
+      resolveConfig({ dest: "/vault", waitUntil: "invalid" as never }, undefined),
+    ).toThrow("Invalid waitUntil value");
+  });
+
+  it("throws on invalid timeout type in config file", () => {
+    const configPath = join(tmpDir, "config.yaml");
+    writeFileSync(configPath, "dest: /vault\ntimeout: not-a-number\n");
+    expect(() => resolveConfig({}, configPath)).toThrow("Invalid timeout in config file");
+  });
+
+  it("throws on invalid waitUntil in config file", () => {
+    const configPath = join(tmpDir, "config.yaml");
+    writeFileSync(configPath, "dest: /vault\nwaitUntil: invalid\n");
+    expect(() => resolveConfig({}, configPath)).toThrow("Invalid waitUntil value");
+  });
 });

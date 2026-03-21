@@ -54,4 +54,14 @@ describe("extract", () => {
     expect(result.metadata.title).toBe("テスト記事タイトル");
     expect(result.content).toContain("テスト記事の本文");
   });
+
+  it("throws when Readability cannot parse content", () => {
+    expect(() => extract("", "https://example.com")).toThrow(
+      "Readability failed to extract content from the page",
+    );
+  });
+
+  it("throws when given completely empty HTML", () => {
+    expect(() => extract("<html><head></head><body></body></html>", "https://example.com")).toThrow();
+  });
 });
