@@ -7,7 +7,7 @@
   "author": "driller",
   "repository": {
     "type": "git",
-    "url": "https://github.com/drillan/vault-fetch.git"
+    "url": "git+https://github.com/drillan/vault-fetch.git"
   },
   "keywords": [
     "obsidian",
@@ -21,7 +21,7 @@
     "dist"
   ],
   "bin": {
-    "vault-fetch": "./dist/cli.js"
+    "vault-fetch": "dist/cli.js"
   },
   "scripts": {
     "build": "tsup",
