@@ -123,11 +123,14 @@ program
 
       console.error("Browser opened. Log in manually, then press Enter here to save session.");
 
+      process.stdin.resume();
       await new Promise<void>((resolve) => {
         process.stdin.once("data", () => {
           resolve();
         });
       });
+      process.stdin.pause();
+      process.stdin.unref();
 
       const sessionPath = getSessionPath(url, sessionsDir);
       await context.storageState({ path: sessionPath });
