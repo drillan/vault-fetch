@@ -1,7 +1,25 @@
 {
   "name": "vault-fetch",
   "version": "0.1.0",
+  "description": "Fetch JS-rendered web pages with Playwright and save as Markdown to Obsidian Vault",
   "type": "module",
+  "license": "MIT",
+  "author": "driller",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/drillan/vault-fetch.git"
+  },
+  "keywords": [
+    "obsidian",
+    "playwright",
+    "markdown",
+    "web-clipper",
+    "readability",
+    "cli"
+  ],
+  "files": [
+    "dist"
+  ],
   "bin": {
     "vault-fetch": "./dist/cli.js"
   },
