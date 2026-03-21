@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { once } from "node:events";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -124,11 +125,7 @@ program
       console.error("Browser opened. Log in manually, then press Enter here to save session.");
 
       process.stdin.resume();
-      await new Promise<void>((resolve) => {
-        process.stdin.once("data", () => {
-          resolve();
-        });
-      });
+      await once(process.stdin, "data");
       process.stdin.pause();
       process.stdin.unref();
 
