@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { resolveConfig } from "./config.js";
 import { fetchPage } from "./fetcher.js";
-import { extractContent, extractMetadata } from "./extractor.js";
+import { extract, extractMetadata } from "./extractor.js";
 import { convertToMarkdown } from "./converter.js";
 import { writeMarkdownFile, buildFrontmatter } from "./writer.js";
 import {
@@ -76,8 +76,9 @@ program
         contentHtml = fetchResult.html;
         metadata = extractMetadata(fetchResult.fullHtml, fetchResult.finalUrl);
       } else {
-        metadata = extractMetadata(fetchResult.html, fetchResult.finalUrl);
-        contentHtml = extractContent(fetchResult.html, fetchResult.finalUrl);
+        const result = extract(fetchResult.html, fetchResult.finalUrl);
+        metadata = result.metadata;
+        contentHtml = result.content;
       }
 
       const markdown = convertToMarkdown(contentHtml);
@@ -107,13 +108,14 @@ program
   .argument("<url>", "URL to login")
   .option("--timeout <seconds>", "Login timeout in seconds", parseInt)
   .action(async (url: string, options: Record<string, unknown>) => {
-    try {
-      const { chromium } = await import("playwright");
-      const sessionsDir = getSessionDir();
-      ensureSessionDir(sessionsDir);
+    const { chromium } = await import("playwright");
+    const sessionsDir = getSessionDir();
+    ensureSessionDir(sessionsDir);
 
-      const timeoutSec = (options.timeout as number | undefined) ?? 300;
-      const browser = await chromium.launch({ headless: false });
+    const timeoutSec = (options.timeout as number | undefined) ?? 300;
+    const browser = await chromium.launch({ headless: false });
+
+    try {
       const context = await browser.newContext();
       const page = await context.newPage();
 
@@ -121,7 +123,6 @@ program
 
       console.error("Browser opened. Log in manually, then press Enter here to save session.");
 
-      // Wait for Enter key
       await new Promise<void>((resolve) => {
         process.stdin.once("data", () => {
           resolve();
@@ -131,12 +132,12 @@ program
       const sessionPath = getSessionPath(url, sessionsDir);
       await context.storageState({ path: sessionPath });
       console.error(`Session saved: ${sessionPath}`);
-
-      await browser.close();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error(`Error: ${message}`);
       process.exit(1);
+    } finally {
+      await browser.close();
     }
   });
 

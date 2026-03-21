@@ -58,9 +58,56 @@ function extractAuthors(
   return [];
 }
 
+export interface ExtractResult {
+  metadata: Metadata;
+  content: string;
+}
+
+export function extract(html: string, finalUrl: string): ExtractResult {
+  // One JSDOM for metadata DOM queries
+  const metaDom = new JSDOM(html, { url: finalUrl });
+  const doc = metaDom.window.document;
+
+  // One JSDOM for Readability (which mutates the DOM)
+  const readabilityDom = new JSDOM(html, { url: finalUrl });
+  const reader = new Readability(readabilityDom.window.document);
+  const article = reader.parse();
+
+  if (!article) {
+    throw new Error("Readability failed to extract content from the page");
+  }
+
+  if (!article.content) {
+    throw new Error("Readability returned empty content for the page");
+  }
+
+  const title = article.title ?? doc.title;
+  const authors = extractAuthors(doc, article.byline ?? null);
+  const published = extractPublishedDate(doc);
+
+  const description =
+    getMetaContent(doc, 'meta[property="og:description"]') ??
+    getMetaContent(doc, 'meta[name="description"]') ??
+    (article.excerpt ?? null);
+
+  const today = new Date().toISOString().split("T")[0];
+
+  return {
+    metadata: {
+      title,
+      source: finalUrl,
+      author: authors,
+      published,
+      created: today,
+      description,
+    },
+    content: article.content,
+  };
+}
+
 export function extractMetadata(html: string, finalUrl: string): Metadata {
-  const dom = new JSDOM(html, { url: finalUrl });
-  const doc = dom.window.document;
+  const metaDom = new JSDOM(html, { url: finalUrl });
+  const doc = metaDom.window.document;
 
   const readabilityDom = new JSDOM(html, { url: finalUrl });
   const reader = new Readability(readabilityDom.window.document);
@@ -85,20 +132,4 @@ export function extractMetadata(html: string, finalUrl: string): Metadata {
     created: today,
     description,
   };
-}
-
-export function extractContent(html: string, url: string): string {
-  const dom = new JSDOM(html, { url });
-  const reader = new Readability(dom.window.document);
-  const article = reader.parse();
-
-  if (!article) {
-    throw new Error("Readability failed to extract content from the page");
-  }
-
-  if (!article.content) {
-    throw new Error("Readability returned empty content for the page");
-  }
-
-  return article.content;
 }

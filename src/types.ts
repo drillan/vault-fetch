@@ -14,11 +14,6 @@ export interface FetchResult {
   finalUrl: string;
 }
 
-export interface ExtractResult {
-  content: string;
-  metadata: Metadata;
-}
-
 export type WaitUntilOption = "load" | "domcontentloaded" | "networkidle";
 
 export interface ResolvedConfig {

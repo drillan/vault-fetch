@@ -33,6 +33,11 @@ export async function fetchPage(
       throw new Error(`No response received from ${url}`);
     }
 
+    const status = response.status();
+    if (status >= 400) {
+      throw new Error(`HTTP ${status} received from ${response.url()}`);
+    }
+
     const finalUrl = response.url();
     const fullHtml = await page.content();
     let html: string;

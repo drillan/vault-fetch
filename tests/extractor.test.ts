@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { extractContent, extractMetadata } from "../src/extractor.js";
+import { extract, extractMetadata } from "../src/extractor.js";
 
 const fixtureHtml = readFileSync("tests/fixtures/article.html", "utf-8");
 
@@ -37,15 +37,21 @@ describe("extractMetadata", () => {
   });
 });
 
-describe("extractContent", () => {
+describe("extract", () => {
   it("extracts article content via Readability", () => {
-    const content = extractContent(fixtureHtml, "https://example.com/article");
-    expect(content).toContain("テスト記事の本文");
+    const result = extract(fixtureHtml, "https://example.com/article");
+    expect(result.content).toContain("テスト記事の本文");
   });
 
   it("excludes navigation and sidebar", () => {
-    const content = extractContent(fixtureHtml, "https://example.com/article");
-    expect(content).not.toContain("ナビゲーション");
-    expect(content).not.toContain("サイドバー");
+    const result = extract(fixtureHtml, "https://example.com/article");
+    expect(result.content).not.toContain("ナビゲーション");
+    expect(result.content).not.toContain("サイドバー");
+  });
+
+  it("returns metadata and content together", () => {
+    const result = extract(fixtureHtml, "https://example.com/article");
+    expect(result.metadata.title).toBe("テスト記事タイトル");
+    expect(result.content).toContain("テスト記事の本文");
   });
 });

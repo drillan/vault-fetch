@@ -11,11 +11,8 @@ export function sanitizeFilename(title: string): string {
     .replace(UNSAFE_CHARS, "")
     .replace(/\s+/g, " ")
     .trim();
-  const truncated =
-    sanitized.length > MAX_FILENAME_LENGTH
-      ? sanitized.slice(0, MAX_FILENAME_LENGTH)
-      : sanitized;
-  return `${truncated}.md`;
+  const base = sanitized.slice(0, MAX_FILENAME_LENGTH) || "Untitled";
+  return `${base}.md`;
 }
 
 export function buildFrontmatter(metadata: Metadata, tags: string[]): string {
