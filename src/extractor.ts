@@ -63,56 +63,18 @@ export interface ExtractResult {
   content: string;
 }
 
-export function extract(html: string, finalUrl: string): ExtractResult {
-  // One JSDOM for metadata DOM queries
-  const metaDom = new JSDOM(html, { url: finalUrl });
-  const doc = metaDom.window.document;
-
-  // One JSDOM for Readability (which mutates the DOM)
-  const readabilityDom = new JSDOM(html, { url: finalUrl });
-  const reader = new Readability(readabilityDom.window.document);
-  const article = reader.parse();
-
-  if (!article) {
-    throw new Error("Readability failed to extract content from the page");
-  }
-
-  if (!article.content) {
-    throw new Error("Readability returned empty content for the page");
-  }
-
-  const title = article.title ?? doc.title;
-  const authors = extractAuthors(doc, article.byline ?? null);
-  const published = extractPublishedDate(doc);
-
-  const description =
-    getMetaContent(doc, 'meta[property="og:description"]') ??
-    getMetaContent(doc, 'meta[name="description"]') ??
-    (article.excerpt ?? null);
-
-  const today = new Date().toISOString().split("T")[0];
-
-  return {
-    metadata: {
-      title,
-      source: finalUrl,
-      author: authors,
-      published,
-      created: today,
-      description,
-    },
-    content: article.content,
-  };
+interface ReadabilityArticle {
+  title: string;
+  byline: string | null;
+  excerpt: string;
+  content: string;
 }
 
-export function extractMetadata(html: string, finalUrl: string): Metadata {
-  const metaDom = new JSDOM(html, { url: finalUrl });
-  const doc = metaDom.window.document;
-
-  const readabilityDom = new JSDOM(html, { url: finalUrl });
-  const reader = new Readability(readabilityDom.window.document);
-  const article = reader.parse();
-
+function buildMetadata(
+  doc: Document,
+  article: ReadabilityArticle | null,
+  finalUrl: string,
+): Metadata {
   const title = article?.title ?? doc.title;
   const authors = extractAuthors(doc, article?.byline ?? null);
   const published = extractPublishedDate(doc);
@@ -132,4 +94,39 @@ export function extractMetadata(html: string, finalUrl: string): Metadata {
     created: today,
     description,
   };
+}
+
+function parseWithReadability(html: string, url: string): ReadabilityArticle | null {
+  const dom = new JSDOM(html, { url });
+  const reader = new Readability(dom.window.document);
+  return reader.parse() as ReadabilityArticle | null;
+}
+
+export function extract(html: string, finalUrl: string): ExtractResult {
+  const metaDom = new JSDOM(html, { url: finalUrl });
+  const doc = metaDom.window.document;
+
+  const article = parseWithReadability(html, finalUrl);
+
+  if (!article) {
+    throw new Error("Readability failed to extract content from the page");
+  }
+
+  if (!article.content) {
+    throw new Error("Readability returned empty content for the page");
+  }
+
+  return {
+    metadata: buildMetadata(doc, article, finalUrl),
+    content: article.content,
+  };
+}
+
+export function extractMetadata(html: string, finalUrl: string): Metadata {
+  const metaDom = new JSDOM(html, { url: finalUrl });
+  const doc = metaDom.window.document;
+
+  const article = parseWithReadability(html, finalUrl);
+
+  return buildMetadata(doc, article, finalUrl);
 }

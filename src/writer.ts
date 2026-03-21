@@ -4,10 +4,12 @@ import yaml from "js-yaml";
 import type { Metadata } from "./types.js";
 
 const UNSAFE_CHARS = /[/\\:*?"<>|]/g;
+const CONTROL_CHARS = /[\x00-\x1f\x7f]/g;
 const MAX_FILENAME_LENGTH = 200;
 
 export function sanitizeFilename(title: string): string {
   const sanitized = title
+    .replace(CONTROL_CHARS, "")
     .replace(UNSAFE_CHARS, "")
     .replace(/\s+/g, " ")
     .trim();

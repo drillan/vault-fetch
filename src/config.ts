@@ -33,13 +33,44 @@ function expandTilde(filePath: string): string {
   return filePath;
 }
 
+const VALID_WAIT_UNTIL: readonly string[] = ["load", "domcontentloaded", "networkidle"];
+
+function validateWaitUntil(value: string): WaitUntilOption {
+  if (!VALID_WAIT_UNTIL.includes(value)) {
+    throw new Error(
+      `Invalid waitUntil value: "${value}". Must be one of: ${VALID_WAIT_UNTIL.join(", ")}`,
+    );
+  }
+  return value as WaitUntilOption;
+}
+
 function loadConfigFile(configPath: string): FileConfig {
   const content = readFileSync(configPath, "utf-8");
   const parsed = yaml.load(content);
   if (parsed === null || typeof parsed !== "object") {
     throw new Error(`Invalid config file: ${configPath}`);
   }
-  return parsed as FileConfig;
+  const config = parsed as Record<string, unknown>;
+
+  if (config.timeout !== undefined && typeof config.timeout !== "number") {
+    throw new Error(`Invalid timeout in config file: expected number, got ${typeof config.timeout}`);
+  }
+  if (config.dest !== undefined && typeof config.dest !== "string") {
+    throw new Error(`Invalid dest in config file: expected string, got ${typeof config.dest}`);
+  }
+  if (config.waitUntil !== undefined) {
+    if (typeof config.waitUntil !== "string") {
+      throw new Error(`Invalid waitUntil in config file: expected string, got ${typeof config.waitUntil}`);
+    }
+    validateWaitUntil(config.waitUntil);
+  }
+  if (config.tags !== undefined) {
+    if (!Array.isArray(config.tags) || !config.tags.every((t: unknown) => typeof t === "string")) {
+      throw new Error("Invalid tags in config file: expected array of strings");
+    }
+  }
+
+  return config as FileConfig;
 }
 
 export function resolveConfig(
@@ -77,8 +108,8 @@ export function resolveConfig(
     timeout = fileConfig.timeout ?? DEFAULT_TIMEOUT;
   }
 
-  const waitUntil =
-    cliOptions.waitUntil ?? fileConfig.waitUntil ?? DEFAULT_WAIT_UNTIL;
+  const rawWaitUntil = cliOptions.waitUntil ?? fileConfig.waitUntil ?? DEFAULT_WAIT_UNTIL;
+  const waitUntil = validateWaitUntil(rawWaitUntil);
 
   // Merge tags: file tags + CLI tags + always clippings
   const allTags = [
