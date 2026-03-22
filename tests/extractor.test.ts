@@ -61,6 +61,11 @@ describe("extract", () => {
     );
   });
 
+  it("includes --raw and --selector hints in Readability failure message", () => {
+    expect(() => extract("", "https://example.com")).toThrow("--raw");
+    expect(() => extract("", "https://example.com")).toThrow("--selector");
+  });
+
   it("throws when given completely empty HTML", () => {
     expect(() => extract("<html><head></head><body></body></html>", "https://example.com")).toThrow();
   });

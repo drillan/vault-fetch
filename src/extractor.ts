@@ -109,7 +109,10 @@ export function extract(html: string, finalUrl: string): ExtractResult {
   const article = parseWithReadability(html, finalUrl);
 
   if (!article) {
-    throw new Error("Readability failed to extract content from the page");
+    throw new Error(
+      "Readability failed to extract content from the page. " +
+        "Try --raw to convert the full page, or --selector <css> to target specific content.",
+    );
   }
 
   if (!article.content) {

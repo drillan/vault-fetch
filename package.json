@@ -1,6 +1,6 @@
 {
   "name": "vault-fetch",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fetch JS-rendered web pages with Playwright and save as Markdown to Obsidian Vault",
   "type": "module",
   "license": "MIT",
