@@ -1,142 +1,142 @@
 # vault-fetch
 
-Obsidian Clipper では取得できない、JavaScript レンダリングや認証が必要な Web ページを Playwright で取得し、Markdown に変換して Obsidian Vault に保存する CLI ツール。
+A CLI tool that uses Playwright to fetch web pages requiring JavaScript rendering or authentication — pages that Obsidian Clipper cannot handle — converts them to Markdown, and saves them to your Obsidian Vault.
 
-## 特徴
+## Features
 
-- Playwright (Chromium) による JS レンダリング後のページ取得
-- Readability.js による記事本文の抽出（広告・ナビゲーション除去）、`--raw` モードでフルページ変換も可能
-- リソースブロッキング（画像・フォント・メディア）による高速フェッチ
-- Chrome User-Agent 偽装によるボット対策回避
-- Obsidian Clipper 互換のフロントマター（title, source, author, published, created, description, tags）
-- セッション管理（`storageState`）によるログイン済みページの取得
-- 設定の 3 層解決（CLI オプション > 環境変数 > 設定ファイル）
+- Page fetching with JS rendering via Playwright (Chromium)
+- Article content extraction using Readability.js (removes ads and navigation), with `--raw` mode for full-page conversion
+- Resource blocking (images, fonts, media) for faster fetching
+- Chrome User-Agent spoofing to bypass bot detection
+- Obsidian Clipper-compatible frontmatter (title, source, author, published, created, description, tags)
+- Session management (`storageState`) for fetching authenticated pages
+- 3-layer configuration resolution (CLI options > environment variables > config file)
 
-## インストール
+## Installation
 
 ```bash
-# グローバルインストール
+# Global install
 npm install -g vault-fetch
 
-# Playwright のブラウザも必要
+# Playwright browser is also required
 npx playwright install chromium
 ```
 
-## 使い方
+## Usage
 
-`npx` でインストールなしでも実行できます:
+You can run it without installation using `npx`:
 
 ```bash
 npx vault-fetch fetch https://example.com/article --dry-run --dest /tmp
 ```
 
-### ページの取得・保存
+### Fetching and Saving Pages
 
 ```bash
-# Obsidian Vault に保存
+# Save to Obsidian Vault
 vault-fetch fetch https://example.com/article --dest ~/Documents/Obsidian/Clippings
 
-# 標準出力に出力（保存しない）
+# Output to stdout (without saving)
 vault-fetch fetch https://example.com/article --dry-run --dest /tmp
 
-# headed モードで実行（デバッグ用）
+# Run in headed mode (for debugging)
 vault-fetch fetch https://example.com/article --dest ~/Documents/Obsidian/Clippings --headed
 
-# 特定の CSS セレクタのみ抽出（Readability をスキップ）
+# Extract only a specific CSS selector (skips Readability)
 vault-fetch fetch https://example.com/article --dest ~/Documents/Obsidian/Clippings --selector "article"
 
-# タグを追加
+# Add tags
 vault-fetch fetch https://example.com/article --dest ~/Documents/Obsidian/Clippings --tag tech --tag ai
 
-# 非記事ページをフルページ変換（Readability をスキップ）
+# Full-page conversion for non-article pages (skips Readability)
 vault-fetch fetch https://example.com/table-page --dest ~/Documents/Obsidian/Clippings --raw
 
-# 画像を含めてフェッチ（デフォルトではブロック）
+# Fetch with images (blocked by default)
 vault-fetch fetch https://example.com/article --dest ~/Documents/Obsidian/Clippings --no-block-images
 ```
 
-### ログイン（セッション保存）
+### Login (Session Storage)
 
-認証が必要なサイトの場合、事前にログインしてセッションを保存できます。
+For sites that require authentication, you can log in and save the session beforehand.
 
 ```bash
 vault-fetch login https://note.com
-# → ブラウザが開く → 手動でログイン → ターミナルで Enter を押す
+# → Browser opens → Log in manually → Press Enter in terminal
 ```
 
-以降の `fetch` でそのドメインのセッションが自動的に使用されます。
+Subsequent `fetch` commands will automatically use the saved session for that domain.
 
-### fetch オプション
+### Fetch Options
 
-| オプション | 説明 |
+| Option | Description |
 |---|---|
-| `--dest <path>` | 保存先ディレクトリ（必須） |
-| `--headed` | ブラウザを表示して実行 |
-| `--selector <css>` | CSS セレクタで要素を抽出 |
-| `--timeout <sec>` | タイムアウト秒数（デフォルト: 30） |
-| `--tag <name>` | タグ追加（複数指定可） |
-| `--wait-until <event>` | 待機条件: `load` / `domcontentloaded` / `networkidle`（デフォルト: `networkidle`） |
-| `--skip-session` | 保存済みセッションを使わない |
-| `--dry-run` | 保存せず標準出力に出力 |
-| `--raw` | Readability をスキップし、フルページ HTML を直接変換 |
-| `--no-block-images` | 画像リクエストのブロックを無効化 |
-| `--no-block-fonts` | フォントリクエストのブロックを無効化 |
-| `--no-block-media` | メディアリクエストのブロックを無効化 |
+| `--dest <path>` | Destination directory (required) |
+| `--headed` | Run with browser visible |
+| `--selector <css>` | Extract elements by CSS selector |
+| `--timeout <sec>` | Timeout in seconds (default: 30) |
+| `--tag <name>` | Add tags (can be specified multiple times) |
+| `--wait-until <event>` | Wait condition: `load` / `domcontentloaded` / `networkidle` (default: `networkidle`) |
+| `--skip-session` | Do not use saved sessions |
+| `--dry-run` | Output to stdout without saving |
+| `--raw` | Skip Readability and convert full-page HTML directly |
+| `--no-block-images` | Disable image request blocking |
+| `--no-block-fonts` | Disable font request blocking |
+| `--no-block-media` | Disable media request blocking |
 
-## 設定
+## Configuration
 
-### 設定ファイル
+### Config File
 
 `~/.config/vault-fetch/config.yaml`:
 
 ```yaml
-# Obsidian Vault の保存先
+# Obsidian Vault destination
 dest: ~/Documents/Obsidian/Clippings
 
-# デフォルトタグ
+# Default tags
 tags:
   - clippings
 
 timeout: 30
 ```
 
-### 環境変数
+### Environment Variables
 
-| 変数 | 説明 |
+| Variable | Description |
 |---|---|
-| `VAULT_FETCH_DEST` | 保存先ディレクトリ |
-| `VAULT_FETCH_TIMEOUT` | タイムアウト秒数 |
+| `VAULT_FETCH_DEST` | Destination directory |
+| `VAULT_FETCH_TIMEOUT` | Timeout in seconds |
 
-### 優先順位
+### Priority
 
-CLI オプション > 環境変数 > 設定ファイル > デフォルト値
+CLI options > Environment variables > Config file > Default values
 
-## 出力例
+## Output Example
 
 ```yaml
 ---
-title: ADHDの自分が毎日クッソ集中できるようになった習慣
-source: https://note.com/simplearchitect/n/n8389e1b4fbde
+title: "Thinking, Fast and Slow: Lessons for Software Engineers"
+source: https://medium.com/@example/thinking-fast-and-slow-lessons-for-engineers-abc123
 author:
-  - "[[牛尾　剛]]"
+  - "[[Jane Smith]]"
 published: 2025-06-14
 created: 2025-07-03
-description: 自分はADHDですので、もちろん集中力は暗黒です...
+description: How cognitive biases from Kahneman's research apply to everyday engineering decisions...
 tags:
   - clippings
 ---
 
-記事の本文が Markdown で続きます...
+The article body continues in Markdown...
 ```
 
-## 開発
+## Development
 
 ```bash
-npm run build        # tsup でビルド
-npm test             # vitest でテスト実行
-npm run typecheck    # 型チェック
+npm run build        # Build with tsup
+npm test             # Run tests with vitest
+npm run typecheck    # Type checking
 ```
 
-## ライセンス
+## License
 
 MIT
