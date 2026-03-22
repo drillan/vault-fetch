@@ -95,4 +95,48 @@ describe("resolveConfig", () => {
     writeFileSync(configPath, "dest: /vault\nwaitUntil: invalid\n");
     expect(() => resolveConfig({}, configPath)).toThrow("Invalid waitUntil value");
   });
+
+  describe("resource blocking options", () => {
+    it("defaults blockImages to true", () => {
+      const config = resolveConfig({ dest: "/vault" }, undefined);
+      expect(config.blockImages).toBe(true);
+    });
+
+    it("defaults blockFonts to true", () => {
+      const config = resolveConfig({ dest: "/vault" }, undefined);
+      expect(config.blockFonts).toBe(true);
+    });
+
+    it("defaults blockMedia to true", () => {
+      const config = resolveConfig({ dest: "/vault" }, undefined);
+      expect(config.blockMedia).toBe(true);
+    });
+
+    it("allows disabling blockImages via CLI", () => {
+      const config = resolveConfig({ dest: "/vault", blockImages: false }, undefined);
+      expect(config.blockImages).toBe(false);
+    });
+
+    it("allows disabling blockFonts via CLI", () => {
+      const config = resolveConfig({ dest: "/vault", blockFonts: false }, undefined);
+      expect(config.blockFonts).toBe(false);
+    });
+
+    it("allows disabling blockMedia via CLI", () => {
+      const config = resolveConfig({ dest: "/vault", blockMedia: false }, undefined);
+      expect(config.blockMedia).toBe(false);
+    });
+  });
+
+  describe("raw option", () => {
+    it("defaults raw to false", () => {
+      const config = resolveConfig({ dest: "/vault" }, undefined);
+      expect(config.raw).toBe(false);
+    });
+
+    it("allows enabling raw via CLI", () => {
+      const config = resolveConfig({ dest: "/vault", raw: true }, undefined);
+      expect(config.raw).toBe(true);
+    });
+  });
 });

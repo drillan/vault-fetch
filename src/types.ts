@@ -25,4 +25,8 @@ export interface ResolvedConfig {
   selector: string | null;
   noSession: boolean;
   dryRun: boolean;
+  blockImages: boolean;
+  blockFonts: boolean;
+  blockMedia: boolean;
+  raw: boolean;
 }

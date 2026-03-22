@@ -24,7 +24,7 @@ program
   .description(
     "Fetch JS-rendered web pages and save as Markdown to Obsidian Vault",
   )
-  .version("0.1.0");
+  .version("0.2.0");
 
 program
   .command("fetch")
@@ -44,6 +44,10 @@ program
   )
   .option("--skip-session", "Do not use saved session")
   .option("--dry-run", "Output to stdout instead of saving")
+  .option("--no-block-images", "Do not block image requests")
+  .option("--no-block-fonts", "Do not block font requests")
+  .option("--no-block-media", "Do not block media requests")
+  .option("--raw", "Convert full page HTML without Readability extraction")
   .action(async (url: string, options: Record<string, unknown>) => {
     try {
       const configPath = existsSync(CONFIG_PATH) ? CONFIG_PATH : undefined;
@@ -57,9 +61,17 @@ program
           selector: options.selector as string | undefined,
           noSession: options.skipSession as boolean | undefined,
           dryRun: options.dryRun as boolean | undefined,
+          blockImages: options.blockImages as boolean | undefined,
+          blockFonts: options.blockFonts as boolean | undefined,
+          blockMedia: options.blockMedia as boolean | undefined,
+          raw: options.raw as boolean | undefined,
         },
         configPath,
       );
+
+      if (config.raw && config.selector) {
+        throw new Error("--raw and --selector cannot be used together.");
+      }
 
       // Validate dest directory exists
       if (!config.dryRun && !existsSync(config.dest)) {
@@ -75,6 +87,10 @@ program
       if (config.selector) {
         // --selector mode: skip Readability, extract metadata from full page
         contentHtml = fetchResult.html;
+        metadata = extractMetadata(fetchResult.fullHtml, fetchResult.finalUrl);
+      } else if (config.raw) {
+        // --raw mode: skip Readability, convert full page HTML directly
+        contentHtml = fetchResult.fullHtml;
         metadata = extractMetadata(fetchResult.fullHtml, fetchResult.finalUrl);
       } else {
         const result = extract(fetchResult.html, fetchResult.finalUrl);

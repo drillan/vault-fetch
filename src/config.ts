@@ -24,6 +24,10 @@ interface CliOptions {
   selector?: string;
   noSession?: boolean;
   dryRun?: boolean;
+  blockImages?: boolean;
+  blockFonts?: boolean;
+  blockMedia?: boolean;
+  raw?: boolean;
 }
 
 function expandTilde(filePath: string): string {
@@ -128,5 +132,9 @@ export function resolveConfig(
     selector: cliOptions.selector ?? null,
     noSession: cliOptions.noSession ?? false,
     dryRun: cliOptions.dryRun ?? false,
+    blockImages: cliOptions.blockImages ?? true,
+    blockFonts: cliOptions.blockFonts ?? true,
+    blockMedia: cliOptions.blockMedia ?? true,
+    raw: cliOptions.raw ?? false,
   };
 }
