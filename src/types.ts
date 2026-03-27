@@ -7,12 +7,22 @@ export interface Metadata {
   description: string | null;
 }
 
-export interface FetchResult {
+export interface HtmlFetchResult {
+  kind: "html";
   html: string;
   fullHtml: string;
   url: string;
   finalUrl: string;
 }
+
+export interface PdfFetchResult {
+  kind: "pdf";
+  pdfBuffer: Buffer;
+  url: string;
+  finalUrl: string;
+}
+
+export type FetchResult = HtmlFetchResult | PdfFetchResult;
 
 export type WaitUntilOption = "load" | "domcontentloaded" | "networkidle";
 

@@ -1,10 +1,11 @@
 # vault-fetch
 
-A CLI tool that uses Playwright to fetch web pages requiring JavaScript rendering or authentication — pages that Obsidian Clipper cannot handle — converts them to Markdown, and saves them to your Obsidian Vault.
+A CLI tool that uses Playwright to fetch web pages and PDF files — pages that Obsidian Clipper cannot handle — converts them to Markdown, and saves them to your Obsidian Vault.
 
 ## Features
 
 - Page fetching with JS rendering via Playwright (Chromium)
+- **PDF to Markdown conversion** (auto-detected via Content-Type)
 - Article content extraction using Readability.js (removes ads and navigation), with `--raw` mode for full-page conversion
 - Resource blocking (images, fonts, media) for faster fetching
 - Chrome User-Agent spoofing to bypass bot detection
@@ -53,7 +54,18 @@ vault-fetch fetch https://example.com/table-page --dest ~/Documents/Obsidian/Cli
 
 # Fetch with images (blocked by default)
 vault-fetch fetch https://example.com/article --dest ~/Documents/Obsidian/Clippings --no-block-images
+
+# Fetch a PDF and convert to Markdown (auto-detected)
+vault-fetch fetch https://example.com/report.pdf --dest ~/Documents/Obsidian/Clippings
 ```
+
+### PDF Support
+
+When the server returns `Content-Type: application/pdf`, vault-fetch automatically downloads the PDF and converts it to Markdown using [pdf2md](https://github.com/opendocsg/pdf2md). No additional flags are needed.
+
+- Title is extracted from the first `#` heading in the converted Markdown, or from the URL filename
+- `--selector` and `--raw` options cannot be used with PDF URLs
+- Session support works with authenticated PDF downloads
 
 ### Login (Session Storage)
 
