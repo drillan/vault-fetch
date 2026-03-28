@@ -1,7 +1,7 @@
 {
   "name": "vault-fetch",
-  "version": "0.3.1",
-  "description": "Fetch JS-rendered web pages with Playwright and save as Markdown to Obsidian Vault",
+  "version": "0.4.0",
+  "description": "Fetch JS-rendered web pages with CloakBrowser (stealth Chromium) and save as Markdown to Obsidian Vault",
   "type": "module",
   "license": "MIT",
   "author": "driller",
@@ -36,10 +36,11 @@
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
     "@opendocsg/pdf2md": "^0.2.5",
+    "cloakbrowser": "^0.3.18",
     "commander": "^14.0.3",
     "js-yaml": "^4.1.1",
     "jsdom": "^29.0.1",
-    "playwright": "^1.58.2",
+    "playwright-core": "^1.58.2",
     "turndown": "^7.2.2"
   },
   "devDependencies": {

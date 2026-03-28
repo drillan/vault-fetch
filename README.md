@@ -4,11 +4,12 @@ A CLI tool that uses Playwright to fetch web pages and PDF files — pages that 
 
 ## Features
 
-- Page fetching with JS rendering via Playwright (Chromium)
+- Page fetching with JS rendering via [CloakBrowser](https://github.com/CloakHQ/CloakBrowser) (stealth Chromium with source-level anti-bot patches)
 - **PDF to Markdown conversion** (auto-detected via Content-Type)
 - Article content extraction using Readability.js (removes ads and navigation), with `--raw` mode for full-page conversion
 - Resource blocking (images, fonts, media) for faster fetching
-- Chrome User-Agent spoofing to bypass bot detection
+- Anti-bot detection evasion (CDP leak patching, fingerprint randomization, automation signal removal)
+- HTTP/HTTPS proxy support via `--proxy` option or `VAULT_FETCH_PROXY` environment variable
 - Obsidian Clipper-compatible frontmatter (title, source, author, published, created, description, tags)
 - Session management (`storageState`) for fetching authenticated pages
 - 3-layer configuration resolution (CLI options > environment variables > config file)
@@ -19,8 +20,7 @@ A CLI tool that uses Playwright to fetch web pages and PDF files — pages that 
 # Global install
 npm install -g vault-fetch
 
-# Playwright browser is also required
-npx playwright install chromium
+# CloakBrowser's stealth Chromium binary is downloaded automatically on first run (~200MB, cached at ~/.cloakbrowser/)
 ```
 
 ## Usage
@@ -57,6 +57,9 @@ vault-fetch fetch https://example.com/article --dest ~/Documents/Obsidian/Clippi
 
 # Fetch a PDF and convert to Markdown (auto-detected)
 vault-fetch fetch https://example.com/report.pdf --dest ~/Documents/Obsidian/Clippings
+
+# Fetch via proxy
+vault-fetch fetch https://example.com/article --dest ~/Documents/Obsidian/Clippings --proxy http://proxy:8080
 ```
 
 ### PDF Support
@@ -97,6 +100,7 @@ Subsequent `fetch` commands will automatically use the saved session for that do
 | `--no-block-images` | Disable image request blocking |
 | `--no-block-fonts` | Disable font request blocking |
 | `--no-block-media` | Disable media request blocking |
+| `--proxy <url>` | HTTP/HTTPS proxy URL (e.g. `http://host:port`) |
 
 ## Configuration
 
@@ -121,6 +125,7 @@ timeout: 30
 |---|---|
 | `VAULT_FETCH_DEST` | Destination directory |
 | `VAULT_FETCH_TIMEOUT` | Timeout in seconds |
+| `VAULT_FETCH_PROXY` | HTTP/HTTPS proxy URL |
 
 ### Priority
 

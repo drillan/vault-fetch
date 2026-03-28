@@ -40,4 +40,5 @@ export interface ResolvedConfig {
   blockFonts: boolean;
   blockMedia: boolean;
   raw: boolean;
+  proxy: string | null;
 }

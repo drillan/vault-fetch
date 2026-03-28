@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0] - 2026-03-28
+
+### Added
+
+- Anti-bot detection evasion using [CloakBrowser](https://github.com/CloakHQ/CloakBrowser) (stealth Chromium with 33 source-level C++ patches for CDP leak patching, fingerprint randomization, and automation signal removal)
+- `--proxy <url>` option for HTTP/HTTPS proxy support (available for both `fetch` and `login` commands)
+- `VAULT_FETCH_PROXY` environment variable for proxy configuration
+- Proxy URL validation with explicit error messages for unsupported schemes (SOCKS5 support planned for future release)
+
+### Changed
+
+- **Breaking**: Browser engine replaced from Playwright to CloakBrowser. `npx playwright install chromium` is no longer needed; CloakBrowser's stealth Chromium binary is downloaded automatically on first run (~200MB, cached at `~/.cloakbrowser/`)
+- Removed hardcoded Chrome User-Agent spoofing (CloakBrowser generates realistic browser fingerprints automatically)
+
 ## [0.3.1] - 2026-03-28
 
 ### Added

@@ -3,7 +3,7 @@ import { once } from "node:events";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { resolveConfig } from "./config.js";
+import { resolveConfig, resolveProxy } from "./config.js";
 import { fetchPage } from "./fetcher.js";
 import { extract, extractMetadata } from "./extractor.js";
 import { convertToMarkdown } from "./converter.js";
@@ -24,7 +24,7 @@ program
   .description(
     "Fetch JS-rendered web pages and save as Markdown to Obsidian Vault",
   )
-  .version("0.3.1");
+  .version("0.4.0");
 
 program
   .command("fetch")
@@ -49,6 +49,7 @@ program
   .option("--no-block-media", "Do not block media requests")
   .option("--raw", "Convert full page HTML without Readability extraction")
   .option("--title <text>", "Override the page title for the output filename")
+  .option("--proxy <url>", "HTTP/HTTPS proxy URL (e.g. http://host:port)")
   .action(async (url: string, options: Record<string, unknown>) => {
     try {
       const configPath = existsSync(CONFIG_PATH) ? CONFIG_PATH : undefined;
@@ -67,6 +68,7 @@ program
           blockFonts: options.blockFonts as boolean | undefined,
           blockMedia: options.blockMedia as boolean | undefined,
           raw: options.raw as boolean | undefined,
+          proxy: options.proxy as string | undefined,
         },
         configPath,
       );
@@ -142,13 +144,21 @@ program
   .description("Login to a site and save session")
   .argument("<url>", "URL to login")
   .option("--timeout <seconds>", "Login timeout in seconds", parseInt)
+  .option("--proxy <url>", "HTTP/HTTPS proxy URL (e.g. http://host:port)")
   .action(async (url: string, options: Record<string, unknown>) => {
-    const { chromium } = await import("playwright");
+    const { launch } = await import("cloakbrowser");
     const sessionsDir = getSessionDir();
     ensureSessionDir(sessionsDir);
 
     const timeoutSec = (options.timeout as number | undefined) ?? 300;
-    const browser = await chromium.launch({ headless: false });
+    const proxyUrl = resolveProxy(
+      options.proxy as string | undefined,
+      process.env.VAULT_FETCH_PROXY,
+    );
+    const browser = await launch({
+      headless: false,
+      ...(proxyUrl !== null && { proxy: proxyUrl }),
+    });
 
     try {
       const context = await browser.newContext();

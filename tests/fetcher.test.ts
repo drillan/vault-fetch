@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildBlockedResourceTypes, CHROME_USER_AGENT, isPdfContentType, validatePdfBuffer } from "../src/fetcher.js";
+import { buildBlockedResourceTypes, isPdfContentType, validatePdfBuffer } from "../src/fetcher.js";
 
 describe("buildBlockedResourceTypes", () => {
   it("includes all resource types when all blocking enabled", () => {
@@ -104,13 +104,3 @@ describe("validatePdfBuffer", () => {
   });
 });
 
-describe("CHROME_USER_AGENT", () => {
-  it("is a non-empty string", () => {
-    expect(CHROME_USER_AGENT).toBeTruthy();
-    expect(typeof CHROME_USER_AGENT).toBe("string");
-  });
-
-  it("contains Chrome identifier", () => {
-    expect(CHROME_USER_AGENT).toContain("Chrome/");
-  });
-});
