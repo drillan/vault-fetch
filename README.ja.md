@@ -63,7 +63,9 @@ vault-fetch fetch https://example.com/report.pdf --dest ~/Documents/Obsidian/Cli
 
 サーバーが `Content-Type: application/pdf` を返す場合、vault-fetch は自動的に PDF をダウンロードし、[pdf2md](https://github.com/opendocsg/pdf2md) で Markdown に変換します。追加のフラグは不要です。
 
-- タイトルは変換された Markdown の最初の `#` 見出しから抽出（なければ URL のファイル名を使用）
+- タイトルは優先順位に従って抽出: PDF メタデータ（`dc:title` / `info.Title`）> Markdown の最初の `#` 見出し > URL のファイル名
+- 著者・公開日も PDF メタデータから抽出（存在する場合）
+- 自動抽出が不正確な場合は `--title` で手動指定可能
 - `--selector` および `--raw` オプションは PDF URL と併用不可
 - セッション機能により認証付き PDF のダウンロードにも対応
 
@@ -83,6 +85,7 @@ vault-fetch login https://note.com
 | オプション | 説明 |
 |---|---|
 | `--dest <path>` | 保存先ディレクトリ（必須） |
+| `--title <text>` | タイトル/ファイル名を手動指定 |
 | `--headed` | ブラウザを表示して実行 |
 | `--selector <css>` | CSS セレクタで要素を抽出 |
 | `--timeout <sec>` | タイムアウト秒数（デフォルト: 30） |

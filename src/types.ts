@@ -33,6 +33,7 @@ export interface ResolvedConfig {
   waitUntil: WaitUntilOption;
   headed: boolean;
   selector: string | null;
+  title: string | null;
   noSession: boolean;
   dryRun: boolean;
   blockImages: boolean;

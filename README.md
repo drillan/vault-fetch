@@ -63,7 +63,9 @@ vault-fetch fetch https://example.com/report.pdf --dest ~/Documents/Obsidian/Cli
 
 When the server returns `Content-Type: application/pdf`, vault-fetch automatically downloads the PDF and converts it to Markdown using [pdf2md](https://github.com/opendocsg/pdf2md). No additional flags are needed.
 
-- Title is extracted from the first `#` heading in the converted Markdown, or from the URL filename
+- Title is extracted in priority order: PDF metadata (`dc:title` / `info.Title`) > first `#` heading in converted Markdown > URL filename
+- Author and published date are also extracted from PDF metadata when available
+- Use `--title` to manually override the title if automatic extraction is inaccurate
 - `--selector` and `--raw` options cannot be used with PDF URLs
 - Session support works with authenticated PDF downloads
 
@@ -83,6 +85,7 @@ Subsequent `fetch` commands will automatically use the saved session for that do
 | Option | Description |
 |---|---|
 | `--dest <path>` | Destination directory (required) |
+| `--title <text>` | Override the page title for the output filename |
 | `--headed` | Run with browser visible |
 | `--selector <css>` | Extract elements by CSS selector |
 | `--timeout <sec>` | Timeout in seconds (default: 30) |

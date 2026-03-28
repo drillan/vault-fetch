@@ -22,6 +22,7 @@ interface CliOptions {
   waitUntil?: WaitUntilOption;
   headed?: boolean;
   selector?: string;
+  title?: string;
   noSession?: boolean;
   dryRun?: boolean;
   blockImages?: boolean;
@@ -130,6 +131,7 @@ export function resolveConfig(
     waitUntil,
     headed: cliOptions.headed ?? false,
     selector: cliOptions.selector ?? null,
+    title: cliOptions.title ?? null,
     noSession: cliOptions.noSession ?? false,
     dryRun: cliOptions.dryRun ?? false,
     blockImages: cliOptions.blockImages ?? true,
