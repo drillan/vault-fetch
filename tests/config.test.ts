@@ -128,6 +128,18 @@ describe("resolveConfig", () => {
     });
   });
 
+  describe("title option", () => {
+    it("defaults title to null", () => {
+      const config = resolveConfig({ dest: "/vault" }, undefined);
+      expect(config.title).toBeNull();
+    });
+
+    it("passes through title from CLI", () => {
+      const config = resolveConfig({ dest: "/vault", title: "My Article" }, undefined);
+      expect(config.title).toBe("My Article");
+    });
+  });
+
   describe("raw option", () => {
     it("defaults raw to false", () => {
       const config = resolveConfig({ dest: "/vault" }, undefined);

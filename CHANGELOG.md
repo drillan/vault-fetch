@@ -5,6 +5,8 @@
 ### Added
 
 - PDF to Markdown conversion: URLs returning `Content-Type: application/pdf` are automatically detected, downloaded, and converted to Markdown using [@opendocsg/pdf2md](https://github.com/opendocsg/pdf2md)
+- PDF metadata extraction: title from XMP `dc:title` / `info.Title`, author from `info.Author`, published date from `info.CreationDate`
+- `--title <text>` option to manually override the page title for the output filename (works with both HTML and PDF URLs)
 - PDF magic byte validation (`%PDF`) to ensure response body is valid PDF data
 - `--selector` and `--raw` options now raise explicit errors when used with PDF URLs
 

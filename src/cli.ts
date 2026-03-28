@@ -48,6 +48,7 @@ program
   .option("--no-block-fonts", "Do not block font requests")
   .option("--no-block-media", "Do not block media requests")
   .option("--raw", "Convert full page HTML without Readability extraction")
+  .option("--title <text>", "Override the page title for the output filename")
   .action(async (url: string, options: Record<string, unknown>) => {
     try {
       const configPath = existsSync(CONFIG_PATH) ? CONFIG_PATH : undefined;
@@ -59,6 +60,7 @@ program
           waitUntil: options.waitUntil as WaitUntilOption | undefined,
           headed: options.headed as boolean | undefined,
           selector: options.selector as string | undefined,
+          title: options.title as string | undefined,
           noSession: options.skipSession as boolean | undefined,
           dryRun: options.dryRun as boolean | undefined,
           blockImages: options.blockImages as boolean | undefined,
@@ -110,6 +112,10 @@ program
         const result = extract(fetchResult.html, fetchResult.finalUrl);
         metadata = result.metadata;
         markdown = convertToMarkdown(result.content);
+      }
+
+      if (config.title !== null) {
+        metadata = { ...metadata, title: config.title };
       }
 
       if (config.dryRun) {
