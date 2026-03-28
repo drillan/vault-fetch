@@ -24,7 +24,7 @@ program
   .description(
     "Fetch JS-rendered web pages and save as Markdown to Obsidian Vault",
   )
-  .version("0.3.0");
+  .version("0.3.1");
 
 program
   .command("fetch")

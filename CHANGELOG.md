@@ -1,12 +1,22 @@
 # Changelog
 
+## [0.3.1] - 2026-03-28
+
+### Added
+
+- PDF metadata extraction: title from XMP `dc:title` / `info.Title`, author from `info.Author`, published date from `info.CreationDate`
+- `--title <text>` option to manually override the page title for the output filename (works with both HTML and PDF URLs)
+- Multiple authors in PDF `info.Author` (separated by `;`, ` and `, `&`) are now split into individual entries
+
+### Fixed
+
+- PDF title extraction no longer relies solely on font-size heuristics; PDF document metadata is now preferred
+
 ## [0.3.0] - 2026-03-28
 
 ### Added
 
 - PDF to Markdown conversion: URLs returning `Content-Type: application/pdf` are automatically detected, downloaded, and converted to Markdown using [@opendocsg/pdf2md](https://github.com/opendocsg/pdf2md)
-- PDF metadata extraction: title from XMP `dc:title` / `info.Title`, author from `info.Author`, published date from `info.CreationDate`
-- `--title <text>` option to manually override the page title for the output filename (works with both HTML and PDF URLs)
 - PDF magic byte validation (`%PDF`) to ensure response body is valid PDF data
 - `--selector` and `--raw` options now raise explicit errors when used with PDF URLs
 
