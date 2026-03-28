@@ -31,7 +31,7 @@ export async function convertPdfToMarkdown(
 }
 
 function extractTitleFromMarkdown(markdown: string): string | null {
-  const match = markdown.match(/^#\s+(.+)$/m);
+  const match = markdown.match(/^#\s+(.+?)(?:\s+#+)?$/m);
   if (!match) return null;
   const trimmed = match[1].trim();
   return trimmed || null;

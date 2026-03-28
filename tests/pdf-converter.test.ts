@@ -25,6 +25,15 @@ describe("convertPdfToMarkdown", () => {
     expect(result.metadata.source).toBe("https://example.com/doc.pdf");
   });
 
+  it("strips ATX closing hashes from title", async () => {
+    mockedPdf2md.mockResolvedValueOnce("# Sample Title ##\n\nContent");
+    const dummyBuffer = Buffer.from("dummy-pdf");
+
+    const result = await convertPdfToMarkdown(dummyBuffer, "https://example.com/doc.pdf");
+
+    expect(result.metadata.title).toBe("Sample Title");
+  });
+
   it("uses URL filename as title when no heading found", async () => {
     mockedPdf2md.mockResolvedValueOnce("Plain text without heading");
     const dummyBuffer = Buffer.from("dummy-pdf");

@@ -126,12 +126,20 @@ export async function fetchPage(
     const contentType = response.headers()["content-type"] ?? "";
 
     // Inline PDF (Content-Disposition: inline or absent).
-    // Use context.request to reliably get the binary data, since
-    // response.body() may return the browser's PDF viewer HTML.
+    // Try response.body() first; fall back to context.request if the
+    // browser returned its PDF viewer HTML instead of the actual bytes.
     if (isPdfContentType(contentType)) {
-      const result = await downloadPdf(context, finalUrl, timeoutMs);
-      await context.close();
-      return { kind: "pdf", pdfBuffer: result.pdfBuffer, url, finalUrl: result.finalUrl };
+      const body = await response.body();
+      try {
+        validatePdfBuffer(body, finalUrl);
+        await context.close();
+        return { kind: "pdf", pdfBuffer: body, url, finalUrl };
+      } catch {
+        // response.body() returned PDF viewer HTML; re-download via API
+        const result = await downloadPdf(context, finalUrl, timeoutMs);
+        await context.close();
+        return { kind: "pdf", pdfBuffer: result.pdfBuffer, url, finalUrl: result.finalUrl };
+      }
     }
 
     const fullHtml = await page.content();
