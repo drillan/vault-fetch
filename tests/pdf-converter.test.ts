@@ -194,6 +194,66 @@ describe("convertPdfToMarkdown", () => {
       expect(result.metadata.published).toBe("2025-06-01");
     });
 
+    it("strips brackets from author name to avoid broken wiki-links", async () => {
+      mockPdf2mdWithMetadata("# Title\n\nContent", {
+        info: { Title: "Title", Author: "Author ]] Name" },
+        metadata: null,
+      });
+      const dummyBuffer = Buffer.from("dummy-pdf");
+
+      const result = await convertPdfToMarkdown(dummyBuffer, "https://example.com/doc.pdf");
+
+      expect(result.metadata.author).toEqual(["[[Author  Name]]"]);
+    });
+
+    it("splits multiple authors separated by semicolon", async () => {
+      mockPdf2mdWithMetadata("# Title\n\nContent", {
+        info: { Title: "Title", Author: "Smith, John; Doe, Jane" },
+        metadata: null,
+      });
+      const dummyBuffer = Buffer.from("dummy-pdf");
+
+      const result = await convertPdfToMarkdown(dummyBuffer, "https://example.com/doc.pdf");
+
+      expect(result.metadata.author).toEqual(["[[Smith, John]]", "[[Doe, Jane]]"]);
+    });
+
+    it("splits multiple authors separated by ' and '", async () => {
+      mockPdf2mdWithMetadata("# Title\n\nContent", {
+        info: { Title: "Title", Author: "Alice Smith and Bob Jones" },
+        metadata: null,
+      });
+      const dummyBuffer = Buffer.from("dummy-pdf");
+
+      const result = await convertPdfToMarkdown(dummyBuffer, "https://example.com/doc.pdf");
+
+      expect(result.metadata.author).toEqual(["[[Alice Smith]]", "[[Bob Jones]]"]);
+    });
+
+    it("splits multiple authors separated by '&'", async () => {
+      mockPdf2mdWithMetadata("# Title\n\nContent", {
+        info: { Title: "Title", Author: "Alice Smith & Bob Jones" },
+        metadata: null,
+      });
+      const dummyBuffer = Buffer.from("dummy-pdf");
+
+      const result = await convertPdfToMarkdown(dummyBuffer, "https://example.com/doc.pdf");
+
+      expect(result.metadata.author).toEqual(["[[Alice Smith]]", "[[Bob Jones]]"]);
+    });
+
+    it("filters out empty entries from author splitting", async () => {
+      mockPdf2mdWithMetadata("# Title\n\nContent", {
+        info: { Title: "Title", Author: "John Doe; ; Jane Doe" },
+        metadata: null,
+      });
+      const dummyBuffer = Buffer.from("dummy-pdf");
+
+      const result = await convertPdfToMarkdown(dummyBuffer, "https://example.com/doc.pdf");
+
+      expect(result.metadata.author).toEqual(["[[John Doe]]", "[[Jane Doe]]"]);
+    });
+
     it("sets published to null when CreationDate is invalid", async () => {
       mockPdf2mdWithMetadata("# Title\n\nContent", {
         info: { Title: "Title", CreationDate: "invalid-date" },

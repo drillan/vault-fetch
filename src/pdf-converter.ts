@@ -27,8 +27,19 @@ export function parsePdfDate(dateStr: string): string | null {
   return `${year}-${month}-${day}`;
 }
 
+const AUTHOR_SEPARATOR = /\s*(?:;|\s+and\s+|&)\s*/;
+
 function formatAuthor(raw: string): string {
-  return `[[${raw.trim()}]]`;
+  const sanitized = raw.trim().replace(/[[\]]/g, "");
+  return `[[${sanitized}]]`;
+}
+
+function parseAuthors(raw: string): string[] {
+  return raw
+    .split(AUTHOR_SEPARATOR)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map(formatAuthor);
 }
 
 export async function convertPdfToMarkdown(
@@ -60,8 +71,7 @@ export async function convertPdfToMarkdown(
 
   // Author
   const rawAuthor = pdfMeta?.info.Author;
-  const author =
-    rawAuthor && rawAuthor.trim() ? [formatAuthor(rawAuthor.trim())] : [];
+  const author = rawAuthor && rawAuthor.trim() ? parseAuthors(rawAuthor) : [];
 
   // Published
   const rawDate = pdfMeta?.info.CreationDate;
