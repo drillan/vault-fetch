@@ -13,7 +13,7 @@ import {
   getSessionPath,
   ensureSessionDir,
 } from "./session.js";
-import type { WaitUntilOption } from "./types.js";
+import type { Metadata, WaitUntilOption } from "./types.js";
 
 const CONFIG_PATH = join(homedir(), ".config", "vault-fetch", "config.yaml");
 
@@ -24,7 +24,7 @@ program
   .description(
     "Fetch JS-rendered web pages and save as Markdown to Obsidian Vault",
   )
-  .version("0.2.0");
+  .version("0.3.0");
 
 program
   .command("fetch")
@@ -81,24 +81,36 @@ program
       const sessionsDir = getSessionDir();
       const fetchResult = await fetchPage(url, config, sessionsDir);
 
-      let contentHtml: string;
-      let metadata;
+      let markdown: string;
+      let metadata: Metadata;
 
-      if (config.selector) {
+      if (fetchResult.kind === "pdf") {
+        if (config.selector) {
+          throw new Error("--selector cannot be used with PDF URLs.");
+        }
+        if (config.raw) {
+          throw new Error("--raw cannot be used with PDF URLs.");
+        }
+        const { convertPdfToMarkdown } = await import("./pdf-converter.js");
+        const pdfResult = await convertPdfToMarkdown(
+          fetchResult.pdfBuffer,
+          fetchResult.finalUrl,
+        );
+        markdown = pdfResult.markdown;
+        metadata = pdfResult.metadata;
+      } else if (config.selector) {
         // --selector mode: skip Readability, extract metadata from full page
-        contentHtml = fetchResult.html;
         metadata = extractMetadata(fetchResult.fullHtml, fetchResult.finalUrl);
+        markdown = convertToMarkdown(fetchResult.html);
       } else if (config.raw) {
         // --raw mode: skip Readability, convert full page HTML directly
-        contentHtml = fetchResult.fullHtml;
         metadata = extractMetadata(fetchResult.fullHtml, fetchResult.finalUrl);
+        markdown = convertToMarkdown(fetchResult.fullHtml);
       } else {
         const result = extract(fetchResult.html, fetchResult.finalUrl);
         metadata = result.metadata;
-        contentHtml = result.content;
+        markdown = convertToMarkdown(result.content);
       }
-
-      const markdown = convertToMarkdown(contentHtml);
 
       if (config.dryRun) {
         const frontmatter = buildFrontmatter(metadata, config.tags);

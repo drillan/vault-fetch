@@ -1,10 +1,11 @@
 # vault-fetch
 
-Obsidian Clipper では取得できない、JavaScript レンダリングや認証が必要な Web ページを Playwright で取得し、Markdown に変換して Obsidian Vault に保存する CLI ツール。
+Obsidian Clipper では取得できない、JavaScript レンダリングや認証が必要な Web ページおよび PDF ファイルを Playwright で取得し、Markdown に変換して Obsidian Vault に保存する CLI ツール。
 
 ## 特徴
 
 - Playwright (Chromium) による JS レンダリング後のページ取得
+- **PDF から Markdown への変換**（Content-Type で自動判定）
 - Readability.js による記事本文の抽出（広告・ナビゲーション除去）、`--raw` モードでフルページ変換も可能
 - リソースブロッキング（画像・フォント・メディア）による高速フェッチ
 - Chrome User-Agent 偽装によるボット対策回避
@@ -53,7 +54,18 @@ vault-fetch fetch https://example.com/table-page --dest ~/Documents/Obsidian/Cli
 
 # 画像を含めてフェッチ（デフォルトではブロック）
 vault-fetch fetch https://example.com/article --dest ~/Documents/Obsidian/Clippings --no-block-images
+
+# PDF を取得して Markdown に変換（自動判定）
+vault-fetch fetch https://example.com/report.pdf --dest ~/Documents/Obsidian/Clippings
 ```
+
+### PDF 対応
+
+サーバーが `Content-Type: application/pdf` を返す場合、vault-fetch は自動的に PDF をダウンロードし、[pdf2md](https://github.com/opendocsg/pdf2md) で Markdown に変換します。追加のフラグは不要です。
+
+- タイトルは変換された Markdown の最初の `#` 見出しから抽出（なければ URL のファイル名を使用）
+- `--selector` および `--raw` オプションは PDF URL と併用不可
+- セッション機能により認証付き PDF のダウンロードにも対応
 
 ### ログイン（セッション保存）
 

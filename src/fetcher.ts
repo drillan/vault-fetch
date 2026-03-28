@@ -13,12 +13,46 @@ interface BlockingOptions {
   blockMedia: boolean;
 }
 
+export function isPdfContentType(contentType: string): boolean {
+  return contentType.toLowerCase().includes("application/pdf");
+}
+
 export function buildBlockedResourceTypes(options: BlockingOptions): Set<string> {
   const blocked = new Set<string>();
   if (options.blockImages) blocked.add("image");
   if (options.blockFonts) blocked.add("font");
   if (options.blockMedia) blocked.add("media");
   return blocked;
+}
+
+const PDF_MAGIC_BYTES = "%PDF";
+
+export function validatePdfBuffer(pdfBuffer: Buffer, sourceUrl: string): void {
+  if (pdfBuffer.length === 0) {
+    throw new Error(`Empty PDF response received from ${sourceUrl}`);
+  }
+  const header = pdfBuffer.subarray(0, PDF_MAGIC_BYTES.length).toString("ascii");
+  if (!header.startsWith(PDF_MAGIC_BYTES)) {
+    throw new Error(
+      `Response Content-Type is application/pdf but body is not valid PDF data from ${sourceUrl}`,
+    );
+  }
+}
+
+async function downloadPdf(
+  context: BrowserContext,
+  url: string,
+  timeoutMs: number,
+): Promise<{ pdfBuffer: Buffer; finalUrl: string }> {
+  const apiResponse = await context.request.get(url, { timeout: timeoutMs });
+  const status = apiResponse.status();
+  if (status >= 400) {
+    throw new Error(`HTTP ${status} received when downloading PDF from ${url}`);
+  }
+  const pdfBuffer = Buffer.from(await apiResponse.body());
+  const finalUrl = apiResponse.url();
+  validatePdfBuffer(pdfBuffer, finalUrl);
+  return { pdfBuffer, finalUrl };
 }
 
 export async function fetchPage(
@@ -57,10 +91,27 @@ export async function fetchPage(
     }
 
     const timeoutMs = config.timeout * 1000;
-    const response = await page.goto(url, {
-      waitUntil: config.waitUntil,
-      timeout: timeoutMs,
-    });
+
+    // page.goto throws "Download is starting" when the server returns
+    // Content-Disposition: attachment (common for PDF downloads).
+    // Catch this and download the PDF via the context's HTTP client.
+    let response;
+    try {
+      response = await page.goto(url, {
+        waitUntil: config.waitUntil,
+        timeout: timeoutMs,
+      });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Download is starting")
+      ) {
+        const result = await downloadPdf(context, url, timeoutMs);
+        await context.close();
+        return { kind: "pdf", pdfBuffer: result.pdfBuffer, url, finalUrl: result.finalUrl };
+      }
+      throw error;
+    }
 
     if (!response) {
       throw new Error(`No response received from ${url}`);
@@ -72,6 +123,25 @@ export async function fetchPage(
     }
 
     const finalUrl = response.url();
+    const contentType = response.headers()["content-type"] ?? "";
+
+    // Inline PDF (Content-Disposition: inline or absent).
+    // Try response.body() first; fall back to context.request if the
+    // browser returned its PDF viewer HTML instead of the actual bytes.
+    if (isPdfContentType(contentType)) {
+      const body = await response.body();
+      try {
+        validatePdfBuffer(body, finalUrl);
+        await context.close();
+        return { kind: "pdf", pdfBuffer: body, url, finalUrl };
+      } catch {
+        // response.body() returned PDF viewer HTML; re-download via API
+        const result = await downloadPdf(context, finalUrl, timeoutMs);
+        await context.close();
+        return { kind: "pdf", pdfBuffer: result.pdfBuffer, url, finalUrl: result.finalUrl };
+      }
+    }
+
     const fullHtml = await page.content();
     let html: string;
 
@@ -87,7 +157,7 @@ export async function fetchPage(
 
     await context.close();
 
-    return { html, fullHtml, url, finalUrl };
+    return { kind: "html", html, fullHtml, url, finalUrl };
   } finally {
     await browser.close();
   }
