@@ -68,7 +68,7 @@ function validateProxyUrl(proxy: string): void {
     )
   ) {
     throw new Error(
-      `Unsupported proxy scheme: "${scheme}". Only HTTP and HTTPS proxies are supported.`,
+      `Unsupported proxy scheme: "${scheme}" in ${sanitizeProxyUrl(proxy)}. Only HTTP and HTTPS proxies are supported.`,
     );
   }
 }

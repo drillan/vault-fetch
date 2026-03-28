@@ -187,6 +187,12 @@ describe("resolveConfig", () => {
       ).toThrow("Unsupported proxy scheme");
     });
 
+    it("sanitizes credentials in socks5 error message", () => {
+      expect(() =>
+        resolveConfig({ dest: "/vault", proxy: "socks5://user:secret@proxy:1080" }, undefined),
+      ).toThrow(/\*\*\*/);
+    });
+
     it("throws for invalid URL", () => {
       expect(() =>
         resolveConfig({ dest: "/vault", proxy: "not-a-url" }, undefined),
