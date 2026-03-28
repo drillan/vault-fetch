@@ -29,6 +29,7 @@ interface CliOptions {
   blockFonts?: boolean;
   blockMedia?: boolean;
   raw?: boolean;
+  proxy?: string;
 }
 
 function expandTilde(filePath: string): string {
@@ -36,6 +37,40 @@ function expandTilde(filePath: string): string {
     return resolve(homedir(), filePath.slice(2));
   }
   return filePath;
+}
+
+const SUPPORTED_PROXY_SCHEMES = ["http:", "https:"] as const;
+
+function sanitizeProxyUrl(proxy: string): string {
+  try {
+    const parsed = new URL(proxy);
+    if (parsed.username || parsed.password) {
+      parsed.username = "***";
+      parsed.password = "***";
+    }
+    return parsed.toString();
+  } catch {
+    return "<invalid URL>";
+  }
+}
+
+function validateProxyUrl(proxy: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(proxy);
+  } catch {
+    throw new Error(`Invalid proxy URL: ${sanitizeProxyUrl(proxy)}`);
+  }
+  const scheme = parsed.protocol;
+  if (
+    !SUPPORTED_PROXY_SCHEMES.includes(
+      scheme as (typeof SUPPORTED_PROXY_SCHEMES)[number],
+    )
+  ) {
+    throw new Error(
+      `Unsupported proxy scheme: "${scheme}" in ${sanitizeProxyUrl(proxy)}. Only HTTP and HTTPS proxies are supported.`,
+    );
+  }
 }
 
 const VALID_WAIT_UNTIL: readonly string[] = ["load", "domcontentloaded", "networkidle"];
@@ -78,6 +113,17 @@ function loadConfigFile(configPath: string): FileConfig {
   return config as FileConfig;
 }
 
+export function resolveProxy(
+  cliProxy: string | undefined,
+  envProxy: string | undefined,
+): string | null {
+  const proxy = cliProxy ?? envProxy ?? null;
+  if (proxy !== null) {
+    validateProxyUrl(proxy);
+  }
+  return proxy;
+}
+
 export function resolveConfig(
   cliOptions: CliOptions,
   configPath: string | undefined,
@@ -91,6 +137,7 @@ export function resolveConfig(
   // Layer 2: Environment variables
   const envDest = process.env.VAULT_FETCH_DEST;
   const envTimeout = process.env.VAULT_FETCH_TIMEOUT;
+  const envProxy = process.env.VAULT_FETCH_PROXY;
 
   // Resolve each field: CLI > env > file > default
   const dest = cliOptions.dest ?? envDest ?? fileConfig.dest;
@@ -138,5 +185,6 @@ export function resolveConfig(
     blockFonts: cliOptions.blockFonts ?? true,
     blockMedia: cliOptions.blockMedia ?? true,
     raw: cliOptions.raw ?? false,
+    proxy: resolveProxy(cliOptions.proxy, envProxy),
   };
 }

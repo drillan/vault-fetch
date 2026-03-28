@@ -1,11 +1,7 @@
-import { chromium, type BrowserContext } from "playwright";
+import { launch } from "cloakbrowser";
+import type { BrowserContext } from "playwright-core";
 import type { FetchResult, ResolvedConfig } from "./types.js";
 import { getSessionPath, sessionExists } from "./session.js";
-
-export const CHROME_USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-  "AppleWebKit/537.36 (KHTML, like Gecko) " +
-  "Chrome/134.0.0.0 Safari/537.36";
 
 interface BlockingOptions {
   blockImages: boolean;
@@ -60,14 +56,13 @@ export async function fetchPage(
   config: ResolvedConfig,
   sessionsDir: string,
 ): Promise<FetchResult> {
-  const browser = await chromium.launch({
+  const browser = await launch({
     headless: !config.headed,
+    ...(config.proxy !== null && { proxy: config.proxy }),
   });
 
   try {
-    const contextOptions: Parameters<typeof browser.newContext>[0] = {
-      userAgent: CHROME_USER_AGENT,
-    };
+    const contextOptions: Parameters<typeof browser.newContext>[0] = {};
 
     // Load session if available and not disabled
     if (!config.noSession && sessionExists(url, sessionsDir)) {

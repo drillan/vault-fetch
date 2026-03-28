@@ -16,6 +16,7 @@ describe("resolveConfig", () => {
     rmSync(tmpDir, { recursive: true, force: true });
     delete process.env.VAULT_FETCH_DEST;
     delete process.env.VAULT_FETCH_TIMEOUT;
+    delete process.env.VAULT_FETCH_PROXY;
   });
 
   it("throws when dest is not specified anywhere", () => {
@@ -149,6 +150,53 @@ describe("resolveConfig", () => {
     it("allows enabling raw via CLI", () => {
       const config = resolveConfig({ dest: "/vault", raw: true }, undefined);
       expect(config.raw).toBe(true);
+    });
+  });
+
+  describe("proxy option", () => {
+    it("defaults proxy to null", () => {
+      const config = resolveConfig({ dest: "/vault" }, undefined);
+      expect(config.proxy).toBeNull();
+    });
+
+    it("reads proxy from CLI", () => {
+      const config = resolveConfig({ dest: "/vault", proxy: "http://proxy:8080" }, undefined);
+      expect(config.proxy).toBe("http://proxy:8080");
+    });
+
+    it("reads proxy from VAULT_FETCH_PROXY env var", () => {
+      process.env.VAULT_FETCH_PROXY = "http://env-proxy:3128";
+      const config = resolveConfig({ dest: "/vault" }, undefined);
+      expect(config.proxy).toBe("http://env-proxy:3128");
+    });
+
+    it("CLI --proxy overrides env var", () => {
+      process.env.VAULT_FETCH_PROXY = "http://env-proxy:3128";
+      const config = resolveConfig({ dest: "/vault", proxy: "http://cli-proxy:9090" }, undefined);
+      expect(config.proxy).toBe("http://cli-proxy:9090");
+    });
+
+    it("accepts https proxy", () => {
+      const config = resolveConfig({ dest: "/vault", proxy: "https://secure:443" }, undefined);
+      expect(config.proxy).toBe("https://secure:443");
+    });
+
+    it("throws for socks5 scheme", () => {
+      expect(() =>
+        resolveConfig({ dest: "/vault", proxy: "socks5://proxy:1080" }, undefined),
+      ).toThrow("Unsupported proxy scheme");
+    });
+
+    it("sanitizes credentials in socks5 error message", () => {
+      expect(() =>
+        resolveConfig({ dest: "/vault", proxy: "socks5://user:secret@proxy:1080" }, undefined),
+      ).toThrow(/\*\*\*/);
+    });
+
+    it("throws for invalid URL", () => {
+      expect(() =>
+        resolveConfig({ dest: "/vault", proxy: "not-a-url" }, undefined),
+      ).toThrow("Invalid proxy URL");
     });
   });
 });
