@@ -27,6 +27,10 @@ describe("parseFields", () => {
     expect(() => parseFields(["broken"])).toThrow(/key=value/);
   });
 
+  it("throws when key is empty", () => {
+    expect(() => parseFields(["=value"])).toThrow(/empty/);
+  });
+
   it("throws when key collides with a reserved frontmatter key", () => {
     expect(() => parseFields(["title=X"])).toThrow(/reserved/i);
   });

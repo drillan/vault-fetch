@@ -23,6 +23,9 @@ export function parseFields(raw: string[]): Record<string, unknown> {
     }
     const key = entry.slice(0, eq).trim();
     const rawValue = entry.slice(eq + 1);
+    if (key.length === 0) {
+      throw new Error(`Invalid --field "${entry}": key must not be empty`);
+    }
     if (
       (RESERVED_FRONTMATTER_KEYS as readonly string[]).includes(key)
     ) {
