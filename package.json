@@ -1,6 +1,6 @@
 {
   "name": "vault-fetch",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Fetch JS-rendered web pages with CloakBrowser (stealth Chromium) and save as Markdown to Obsidian Vault",
   "type": "module",
   "license": "MIT",

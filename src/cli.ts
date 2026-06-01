@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { once } from "node:events";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { resolveConfig, resolveProxy, parseFields } from "./config.js";
@@ -17,6 +17,14 @@ import type { Metadata, WaitUntilOption } from "./types.js";
 
 const CONFIG_PATH = join(homedir(), ".config", "vault-fetch", "config.yaml");
 
+// Single source of truth: read the version from package.json (shipped alongside
+// dist via the "files" allowlist) so the CLI never drifts from the published
+// version. import.meta.url resolves to dist/cli.js at runtime; ../ is the
+// package root in both the built output and the src tree.
+const { version } = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
+) as { version: string };
+
 const program = new Command();
 
 program
@@ -24,7 +32,7 @@ program
   .description(
     "Fetch JS-rendered web pages and save as Markdown to Obsidian Vault",
   )
-  .version("0.4.0");
+  .version(version);
 
 program
   .command("fetch")

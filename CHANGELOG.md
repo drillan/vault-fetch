@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.1] - 2026-06-01
+
+### Fixed
+
+- `--version` reported `0.4.0` because the version string was hardcoded in `src/cli.ts`. The CLI now derives its version from `package.json` at runtime, eliminating the duplicate source of truth and preventing future drift
+
 ## [0.5.0] - 2026-06-01
 
 ### Added
