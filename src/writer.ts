@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { writeFileSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import yaml from "js-yaml";
 import type { Metadata } from "./types.js";
@@ -57,15 +57,52 @@ export function buildFrontmatter(
   return `---\n${yamlStr}---`;
 }
 
+function readSource(filePath: string): string | null {
+  if (!existsSync(filePath)) {
+    return null;
+  }
+  const content = readFileSync(filePath, "utf-8");
+  const match = content.match(/^source:\s*(.+)$/m);
+  return match ? match[1].trim() : null;
+}
+
+function resolveTargetPath(
+  dest: string,
+  baseFilename: string,
+  source: string,
+): string {
+  const ext = ".md";
+  const base = baseFilename.endsWith(ext)
+    ? baseFilename.slice(0, -ext.length)
+    : baseFilename;
+
+  let candidate = join(dest, `${base}${ext}`);
+  if (!existsSync(candidate)) {
+    return candidate;
+  }
+  if (readSource(candidate) === source) {
+    return candidate; // 同一ソース: 上書き
+  }
+  let n = 2;
+  for (;;) {
+    candidate = join(dest, `${base}-${n}${ext}`);
+    if (!existsSync(candidate) || readSource(candidate) === source) {
+      return candidate;
+    }
+    n += 1;
+  }
+}
+
 export function writeMarkdownFile(
   dest: string,
   metadata: Metadata,
   markdownContent: string,
   tags: string[],
+  fields: Record<string, unknown> = {},
 ): string {
   const filename = sanitizeFilename(metadata.title);
-  const filePath = join(dest, filename);
-  const frontmatter = buildFrontmatter(metadata, tags);
+  const filePath = resolveTargetPath(dest, filename, metadata.source);
+  const frontmatter = buildFrontmatter(metadata, tags, fields);
   const fullContent = `${frontmatter}\n\n${markdownContent}\n`;
 
   writeFileSync(filePath, fullContent, "utf-8");
