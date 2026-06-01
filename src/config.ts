@@ -30,7 +30,8 @@ export function parseFields(raw: string[]): Record<string, unknown> {
       (RESERVED_FRONTMATTER_KEYS as readonly string[]).includes(key)
     ) {
       throw new Error(
-        `--field key "${key}" is reserved. Use the dedicated option instead (e.g. --title, --tag).`,
+        `--field key "${key}" is reserved. title/tags can be set via --title/--tag; ` +
+        `the others (source, author, published, created, description) are extracted automatically.`,
       );
     }
     result[key] = yaml.load(rawValue);
