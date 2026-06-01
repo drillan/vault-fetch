@@ -3,7 +3,7 @@ import { once } from "node:events";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { resolveConfig, resolveProxy } from "./config.js";
+import { resolveConfig, resolveProxy, parseFields } from "./config.js";
 import { fetchPage } from "./fetcher.js";
 import { extract, extractMetadata } from "./extractor.js";
 import { convertToMarkdown } from "./converter.js";
@@ -49,6 +49,15 @@ program
   .option("--no-block-media", "Do not block media requests")
   .option("--raw", "Convert full page HTML without Readability extraction")
   .option("--title <text>", "Override the page title for the output filename")
+  .option(
+    "--field <kv>",
+    "Add custom frontmatter field key=value (repeatable)",
+    (val: string, acc: string[]) => {
+      acc.push(val);
+      return acc;
+    },
+    [] as string[],
+  )
   .option("--proxy <url>", "HTTP/HTTPS proxy URL (e.g. http://host:port)")
   .action(async (url: string, options: Record<string, unknown>) => {
     try {
@@ -69,6 +78,7 @@ program
           blockMedia: options.blockMedia as boolean | undefined,
           raw: options.raw as boolean | undefined,
           proxy: options.proxy as string | undefined,
+          fields: parseFields(options.field as string[]),
         },
         configPath,
       );
@@ -121,7 +131,7 @@ program
       }
 
       if (config.dryRun) {
-        const frontmatter = buildFrontmatter(metadata, config.tags);
+        const frontmatter = buildFrontmatter(metadata, config.tags, config.fields);
         process.stdout.write(`${frontmatter}\n\n${markdown}\n`);
       } else {
         const filePath = writeMarkdownFile(
@@ -129,6 +139,7 @@ program
           metadata,
           markdown,
           config.tags,
+          config.fields,
         );
         console.error(`Saved: ${filePath}`);
       }
