@@ -1,32 +1,32 @@
 ---
 name: vault-fetch
 description: >
-  Webページを Playwright で取得し、Readability.js で記事本文を抽出して Markdown に変換するスキル。
+  Webページを CloakBrowser（ステルス Chromium）で取得し、Readability.js で記事本文を抽出して Markdown に変換するスキル。
   以下の場面で使用すること:
   (1) WebFetch が 403 エラーや Cloudflare チャレンジを返す場合
   (2) JavaScript レンダリングが必要なサイトのコンテンツを取得したい場合
   (3) ユーザーが「この URL を Obsidian に保存して」「記事をクリップして」と依頼した場合
   (4) Web ページのクリーンな記事本文（広告・ナビゲーション除去済み）が必要な場合
   (5) PDF URL を Markdown に変換して保存したい場合
-  headed-fetcher の機能を統合済み（リソースブロッキング、User-Agent 偽装、--raw モード）。
+  headed-fetcher の機能を統合済み（リソースブロッキング、ステルスブラウザによるボット対策回避、--raw モード）。
   ユーザーが URL のコンテンツ取得に困っている場合や、Obsidian・Vault・クリップ・保存といった言葉を使った場合にも積極的に使用すること。
 license: MIT
 compatibility:
   - node
-  - playwright
+  - cloakbrowser
 metadata:
-  version: 0.4.0
+  version: 0.5.1
   author: driller
 ---
 
 # vault-fetch
 
-Web ページを Playwright で取得し、Readability.js で記事本文を抽出して Obsidian Clipper 互換の Markdown に変換するスキル。PDF URL にも対応。
+Web ページを CloakBrowser（ステルス Chromium）で取得し、Readability.js で記事本文を抽出して Obsidian Clipper 互換の Markdown に変換するスキル。PDF URL にも対応。
 
 ## When to Use
 
 - `WebFetch` ツールが 403 エラーを返す場合
-- Cloudflare などのボット対策が表示される場合（Chrome User-Agent 偽装で回避）
+- Cloudflare などのボット対策が表示される場合（CloakBrowser のステルス Chromium が自動でフィンガープリントを生成して回避）
 - JavaScript を実行しないとコンテンツが表示されないサイト
 - ユーザーが Web ページを Obsidian Vault に保存したい場合
 - クリーンな記事本文（広告・ナビ除去済み）が必要な場合
@@ -39,8 +39,9 @@ vault-fetch がグローバルインストールされていること:
 
 ```bash
 npm install -g vault-fetch
-npx playwright install chromium
 ```
+
+CloakBrowser のステルス Chromium バイナリは初回実行時に自動ダウンロードされる（約 200MB、`~/.cloakbrowser/` にキャッシュ）。`npx playwright install` は不要。
 
 ## Usage
 
@@ -109,6 +110,8 @@ vault-fetch fetch https://example.com/paper.pdf --title "Volatility-managed comm
 | `--headed` | headed モードで実行 |
 | `--timeout <sec>` | タイムアウト秒数（デフォルト: 30） |
 | `--tag <name>` | タグ追加（複数指定可） |
+| `--field <key=value>` | カスタム frontmatter フィールドを追加（複数指定可、固定スキーマの後ろに追記） |
+| `--proxy <url>` | HTTP/HTTPS プロキシ URL（例: `http://host:port`、`fetch`/`login` 両方で有効） |
 | `--wait-until <event>` | 待機条件（デフォルト: networkidle） |
 | `--skip-session` | 保存済みセッションを使わない |
 | `--raw` | Readability をスキップし、フルページ HTML を直接変換 |
@@ -156,3 +159,6 @@ Article content in Markdown...
 - 画像・フォント・メディアはデフォルトでブロックされる（高速化）。`--no-block-images` 等で個別に解除可能
 - PDF のタイトルが正しく抽出されない場合は `--title` オプションで手動指定する
 - `--title` は HTML ページでも使用可能（Readability のタイトルを上書き）
+- `--field type=clipping --field sentiment=bullish` のように繰り返し指定でき、値は YAML として解釈される（配列・wikilink も可。例: `--field 'ticker=["[[AAPL]]"]'`）
+- プロキシは `--proxy` のほか環境変数 `VAULT_FETCH_PROXY` でも指定できる（SOCKS5 は未対応）
+- 同名ファイルが既存で source URL が異なる場合は上書きせず連番エイリアス（`Title-2.md` 等）で保存される。同一 source の再クリップは上書き

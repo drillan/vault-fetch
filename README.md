@@ -1,6 +1,6 @@
 # vault-fetch
 
-A CLI tool that uses Playwright to fetch web pages and PDF files — pages that Obsidian Clipper cannot handle — converts them to Markdown, and saves them to your Obsidian Vault.
+A CLI tool that uses CloakBrowser (stealth Chromium) to fetch web pages and PDF files — pages that Obsidian Clipper cannot handle — converts them to Markdown, and saves them to your Obsidian Vault.
 
 ## Features
 
