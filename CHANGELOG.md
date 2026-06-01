@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0] - 2026-06-01
+
+### Added
+
+- `--field <key=value>` option to inject custom frontmatter fields (repeatable); user-specified fields are appended after the fixed schema
+- Reserved frontmatter key guard: keys that collide with the fixed schema, as well as `__proto__` / `constructor` / `prototype`, are rejected with an explicit error
+
+### Changed
+
+- Filename collisions no longer silently overwrite: when a file with the same name already exists for a different source URL, the new content is saved under a numbered alias (`Title-2.md`, `Title-3.md`, …). Re-clipping the same source still overwrites in place
+
+### Fixed
+
+- Source URL comparison now parses the frontmatter block with `yaml.load`, so URLs that YAML quotes (e.g. containing `": "`) match the canonical source and re-clips overwrite instead of creating a `-2` alias
+- A malformed neighboring file no longer aborts an unrelated save; its frontmatter is treated as a non-matching source
+
 ## [0.4.0] - 2026-03-28
 
 ### Added
