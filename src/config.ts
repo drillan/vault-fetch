@@ -2,7 +2,38 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import yaml from "js-yaml";
+import { RESERVED_FRONTMATTER_KEYS } from "./types.js";
 import type { ResolvedConfig, WaitUntilOption } from "./types.js";
+
+export { RESERVED_FRONTMATTER_KEYS };
+
+export function parseFields(raw: string[]): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const entry of raw) {
+    const eq = entry.indexOf("=");
+    if (eq === -1) {
+      throw new Error(`Invalid --field "${entry}": expected key=value`);
+    }
+    const key = entry.slice(0, eq).trim();
+    const rawValue = entry.slice(eq + 1);
+    if (key.length === 0) {
+      throw new Error(`Invalid --field "${entry}": key must not be empty`);
+    }
+    if (
+      (RESERVED_FRONTMATTER_KEYS as readonly string[]).includes(key)
+    ) {
+      throw new Error(
+        `--field key "${key}" is reserved. title/tags can be set via --title/--tag; ` +
+        `the others (source, author, published, created, description) are extracted automatically.`,
+      );
+    }
+    if (key === "__proto__" || key === "constructor" || key === "prototype") {
+      throw new Error(`--field key "${key}" is not allowed`);
+    }
+    result[key] = yaml.load(rawValue);
+  }
+  return result;
+}
 
 const DEFAULT_TIMEOUT = 30;
 const DEFAULT_WAIT_UNTIL: WaitUntilOption = "networkidle";
@@ -30,6 +61,7 @@ interface CliOptions {
   blockMedia?: boolean;
   raw?: boolean;
   proxy?: string;
+  fields?: Record<string, unknown>;
 }
 
 function expandTilde(filePath: string): string {
@@ -186,5 +218,6 @@ export function resolveConfig(
     blockMedia: cliOptions.blockMedia ?? true,
     raw: cliOptions.raw ?? false,
     proxy: resolveProxy(cliOptions.proxy, envProxy),
+    fields: cliOptions.fields ?? {},
   };
 }

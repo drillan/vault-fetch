@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { writeFileSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import yaml from "js-yaml";
 import type { Metadata } from "./types.js";
@@ -17,7 +17,13 @@ export function sanitizeFilename(title: string): string {
   return `${base}.md`;
 }
 
-export function buildFrontmatter(metadata: Metadata, tags: string[]): string {
+export function buildFrontmatter(
+  metadata: Metadata,
+  tags: string[],
+  fields: Record<string, unknown> = {},
+): string {
+  // Fixed-schema keys: these MUST stay in sync with RESERVED_FRONTMATTER_KEYS in src/types.ts
+  // (title, source, author, published, created, description, tags)
   const data: Record<string, unknown> = {
     title: metadata.title,
     source: metadata.source,
@@ -39,6 +45,10 @@ export function buildFrontmatter(metadata: Metadata, tags: string[]): string {
 
   data.tags = tags;
 
+  for (const [key, value] of Object.entries(fields)) {
+    data[key] = value;
+  }
+
   const yamlStr = yaml.dump(data, {
     quotingType: '"',
     forceQuotes: false,
@@ -49,15 +59,69 @@ export function buildFrontmatter(metadata: Metadata, tags: string[]): string {
   return `---\n${yamlStr}---`;
 }
 
+function readSource(filePath: string): string | null {
+  if (!existsSync(filePath)) {
+    return null;
+  }
+  const content = readFileSync(filePath, "utf-8");
+  if (!content.startsWith("---\n")) {
+    return null;
+  }
+  const end = content.indexOf("\n---", 4);
+  if (end === -1) {
+    return null;
+  }
+  const frontmatter = content.slice(4, end);
+  let parsed: unknown;
+  try {
+    parsed = yaml.load(frontmatter);
+  } catch {
+    return null;
+  }
+  if (parsed === null || typeof parsed !== "object") {
+    return null;
+  }
+  const source = (parsed as Record<string, unknown>).source;
+  return typeof source === "string" ? source : null;
+}
+
+function resolveTargetPath(
+  dest: string,
+  baseFilename: string,
+  source: string,
+): string {
+  const ext = ".md";
+  const base = baseFilename.endsWith(ext)
+    ? baseFilename.slice(0, -ext.length)
+    : baseFilename;
+
+  let candidate = join(dest, `${base}${ext}`);
+  if (!existsSync(candidate)) {
+    return candidate;
+  }
+  if (readSource(candidate) === source) {
+    return candidate; // 同一ソース: 上書き
+  }
+  let n = 2;
+  for (;;) {
+    candidate = join(dest, `${base}-${n}${ext}`);
+    if (!existsSync(candidate) || readSource(candidate) === source) {
+      return candidate;
+    }
+    n += 1;
+  }
+}
+
 export function writeMarkdownFile(
   dest: string,
   metadata: Metadata,
   markdownContent: string,
   tags: string[],
+  fields: Record<string, unknown> = {},
 ): string {
   const filename = sanitizeFilename(metadata.title);
-  const filePath = join(dest, filename);
-  const frontmatter = buildFrontmatter(metadata, tags);
+  const filePath = resolveTargetPath(dest, filename, metadata.source);
+  const frontmatter = buildFrontmatter(metadata, tags, fields);
   const fullContent = `${frontmatter}\n\n${markdownContent}\n`;
 
   writeFileSync(filePath, fullContent, "utf-8");
