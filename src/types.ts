@@ -41,4 +41,5 @@ export interface ResolvedConfig {
   blockMedia: boolean;
   raw: boolean;
   proxy: string | null;
+  fields: Record<string, unknown>;
 }

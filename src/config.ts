@@ -64,6 +64,7 @@ interface CliOptions {
   blockMedia?: boolean;
   raw?: boolean;
   proxy?: string;
+  fields?: Record<string, unknown>;
 }
 
 function expandTilde(filePath: string): string {
@@ -220,5 +221,6 @@ export function resolveConfig(
     blockMedia: cliOptions.blockMedia ?? true,
     raw: cliOptions.raw ?? false,
     proxy: resolveProxy(cliOptions.proxy, envProxy),
+    fields: cliOptions.fields ?? {},
   };
 }

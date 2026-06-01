@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseFields, RESERVED_FRONTMATTER_KEYS } from "../src/config.js";
+import { parseFields, RESERVED_FRONTMATTER_KEYS, resolveConfig } from "../src/config.js";
 
 describe("parseFields", () => {
   it("parses simple key=value as string", () => {
@@ -39,5 +39,20 @@ describe("parseFields", () => {
     expect(RESERVED_FRONTMATTER_KEYS).toContain("title");
     expect(RESERVED_FRONTMATTER_KEYS).toContain("tags");
     expect(RESERVED_FRONTMATTER_KEYS).toContain("source");
+  });
+});
+
+describe("resolveConfig with fields", () => {
+  it("includes parsed fields in resolved config", () => {
+    const cfg = resolveConfig(
+      { dest: "/tmp", fields: { type: "clipping", ticker: ["[[AAPL]]"] } },
+      undefined,
+    );
+    expect(cfg.fields).toEqual({ type: "clipping", ticker: ["[[AAPL]]"] });
+  });
+
+  it("defaults fields to empty object when not given", () => {
+    const cfg = resolveConfig({ dest: "/tmp" }, undefined);
+    expect(cfg.fields).toEqual({});
   });
 });
