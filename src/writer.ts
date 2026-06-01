@@ -62,8 +62,20 @@ function readSource(filePath: string): string | null {
     return null;
   }
   const content = readFileSync(filePath, "utf-8");
-  const match = content.match(/^source:\s*(.+)$/m);
-  return match ? match[1].trim() : null;
+  if (!content.startsWith("---\n")) {
+    return null;
+  }
+  const end = content.indexOf("\n---", 4);
+  if (end === -1) {
+    return null;
+  }
+  const frontmatter = content.slice(4, end);
+  const parsed = yaml.load(frontmatter);
+  if (parsed === null || typeof parsed !== "object") {
+    return null;
+  }
+  const source = (parsed as Record<string, unknown>).source;
+  return typeof source === "string" ? source : null;
 }
 
 function resolveTargetPath(

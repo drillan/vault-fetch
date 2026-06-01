@@ -45,6 +45,15 @@ describe("writeMarkdownFile filename collision", () => {
     expect(existsSync(join(tmpDir, "Same Title-2.md"))).toBe(false);
   });
 
+  it("overwrites same source even when the URL gets YAML-quoted", () => {
+    const tricky = "https://example.com/search?q=react: hooks";
+    const p1 = writeMarkdownFile(tmpDir, meta(tricky), "First", ["clippings"]);
+    const p2 = writeMarkdownFile(tmpDir, meta(tricky), "Second", ["clippings"]);
+    expect(p2).toBe(p1);
+    expect(readFileSync(p1, "utf-8")).toContain("Second");
+    expect(existsSync(join(tmpDir, "Same Title-2.md"))).toBe(false);
+  });
+
   it("increments suffix across three different sources", () => {
     writeMarkdownFile(tmpDir, meta("https://a.com"), "A", ["clippings"]);
     writeMarkdownFile(tmpDir, meta("https://b.com"), "B", ["clippings"]);
