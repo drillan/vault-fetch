@@ -1,3 +1,13 @@
+export const RESERVED_FRONTMATTER_KEYS = [
+  "title",
+  "source",
+  "author",
+  "published",
+  "created",
+  "description",
+  "tags",
+] as const;
+
 export interface Metadata {
   title: string;
   source: string;

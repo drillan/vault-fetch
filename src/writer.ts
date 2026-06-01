@@ -22,6 +22,8 @@ export function buildFrontmatter(
   tags: string[],
   fields: Record<string, unknown> = {},
 ): string {
+  // Fixed-schema keys: these MUST stay in sync with RESERVED_FRONTMATTER_KEYS in src/types.ts
+  // (title, source, author, published, created, description, tags)
   const data: Record<string, unknown> = {
     title: metadata.title,
     source: metadata.source,
@@ -70,7 +72,12 @@ function readSource(filePath: string): string | null {
     return null;
   }
   const frontmatter = content.slice(4, end);
-  const parsed = yaml.load(frontmatter);
+  let parsed: unknown;
+  try {
+    parsed = yaml.load(frontmatter);
+  } catch {
+    return null;
+  }
   if (parsed === null || typeof parsed !== "object") {
     return null;
   }

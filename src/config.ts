@@ -2,17 +2,10 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import yaml from "js-yaml";
+import { RESERVED_FRONTMATTER_KEYS } from "./types.js";
 import type { ResolvedConfig, WaitUntilOption } from "./types.js";
 
-export const RESERVED_FRONTMATTER_KEYS = [
-  "title",
-  "source",
-  "author",
-  "published",
-  "created",
-  "description",
-  "tags",
-] as const;
+export { RESERVED_FRONTMATTER_KEYS };
 
 export function parseFields(raw: string[]): Record<string, unknown> {
   const result: Record<string, unknown> = {};
@@ -33,6 +26,9 @@ export function parseFields(raw: string[]): Record<string, unknown> {
         `--field key "${key}" is reserved. title/tags can be set via --title/--tag; ` +
         `the others (source, author, published, created, description) are extracted automatically.`,
       );
+    }
+    if (key === "__proto__" || key === "constructor" || key === "prototype") {
+      throw new Error(`--field key "${key}" is not allowed`);
     }
     result[key] = yaml.load(rawValue);
   }

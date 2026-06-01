@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { writeMarkdownFile } from "../src/writer.js";
-import { readFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import type { Metadata } from "../src/types.js";
@@ -59,5 +59,20 @@ describe("writeMarkdownFile filename collision", () => {
     writeMarkdownFile(tmpDir, meta("https://b.com"), "B", ["clippings"]);
     const p3 = writeMarkdownFile(tmpDir, meta("https://c.com"), "C", ["clippings"]);
     expect(p3).toBe(join(tmpDir, "Same Title-3.md"));
+  });
+
+  it("does not throw when a neighboring file has malformed frontmatter and saves to -2", () => {
+    // Plant a neighbor with malformed frontmatter that causes yaml.load to throw
+    const neighborPath = join(tmpDir, "Same Title.md");
+    writeFileSync(neighborPath, "---\n: : : bad\n\ttab\n---\nsome content\n", "utf-8");
+
+    // Writing a new note with the same title but a valid source must NOT throw
+    // and must save to Same Title-2.md (malformed neighbor treated as "different source")
+    let result: string;
+    expect(() => {
+      result = writeMarkdownFile(tmpDir, meta("https://example.com"), "New Content", ["clippings"]);
+    }).not.toThrow();
+    expect(existsSync(join(tmpDir, "Same Title-2.md"))).toBe(true);
+    expect(result!).toBe(join(tmpDir, "Same Title-2.md"));
   });
 });

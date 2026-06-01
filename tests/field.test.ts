@@ -42,6 +42,38 @@ describe("parseFields", () => {
     expect(RESERVED_FRONTMATTER_KEYS).toContain("tags");
     expect(RESERVED_FRONTMATTER_KEYS).toContain("source");
   });
+
+  it("reserved key set contains all 7 fixed-schema keys (single-source guard)", () => {
+    const required = ["title", "source", "author", "published", "created", "description", "tags"];
+    for (const key of required) {
+      expect(RESERVED_FRONTMATTER_KEYS as readonly string[]).toContain(key);
+    }
+    expect(RESERVED_FRONTMATTER_KEYS).toHaveLength(7);
+  });
+
+  it("coerces numeric string to number via YAML parse", () => {
+    expect(parseFields(["n=5"])).toEqual({ n: 5 });
+  });
+
+  it("coerces null string to null via YAML parse", () => {
+    expect(parseFields(["x=null"])).toEqual({ x: null });
+  });
+
+  it("keeps plain string as string via YAML parse", () => {
+    expect(parseFields(["s=hello"])).toEqual({ s: "hello" });
+  });
+
+  it("rejects __proto__ key with an error", () => {
+    expect(() => parseFields(["__proto__=x"])).toThrow(/not allowed/);
+  });
+
+  it("rejects constructor key with an error", () => {
+    expect(() => parseFields(["constructor=x"])).toThrow(/not allowed/);
+  });
+
+  it("rejects prototype key with an error", () => {
+    expect(() => parseFields(["prototype=x"])).toThrow(/not allowed/);
+  });
 });
 
 describe("resolveConfig with fields", () => {
@@ -76,6 +108,9 @@ describe("buildFrontmatter with custom fields", () => {
     });
     expect(fm).toContain("type: clipping");
     expect(fm).toContain("sentiment: bullish");
+    // custom fields must come AFTER the fixed schema (tags is the last fixed key)
+    expect(fm.indexOf("type: clipping")).toBeGreaterThan(fm.indexOf("tags:"));
+    expect(fm.indexOf("sentiment: bullish")).toBeGreaterThan(fm.indexOf("tags:"));
   });
 
   it("emits wikilink array values", () => {
