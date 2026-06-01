@@ -1,6 +1,6 @@
 # vault-fetch
 
-Obsidian Clipper では取得できない、JavaScript レンダリングや認証が必要な Web ページおよび PDF ファイルを Playwright で取得し、Markdown に変換して Obsidian Vault に保存する CLI ツール。
+Obsidian Clipper では取得できない、JavaScript レンダリングや認証が必要な Web ページおよび PDF ファイルを CloakBrowser（ステルス Chromium）で取得し、Markdown に変換して Obsidian Vault に保存する CLI ツール。
 
 ## 特徴
 
