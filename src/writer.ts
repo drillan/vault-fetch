@@ -17,7 +17,11 @@ export function sanitizeFilename(title: string): string {
   return `${base}.md`;
 }
 
-export function buildFrontmatter(metadata: Metadata, tags: string[]): string {
+export function buildFrontmatter(
+  metadata: Metadata,
+  tags: string[],
+  fields: Record<string, unknown> = {},
+): string {
   const data: Record<string, unknown> = {
     title: metadata.title,
     source: metadata.source,
@@ -38,6 +42,10 @@ export function buildFrontmatter(metadata: Metadata, tags: string[]): string {
   }
 
   data.tags = tags;
+
+  for (const [key, value] of Object.entries(fields)) {
+    data[key] = value;
+  }
 
   const yamlStr = yaml.dump(data, {
     quotingType: '"',

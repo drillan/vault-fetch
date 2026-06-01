@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseFields, RESERVED_FRONTMATTER_KEYS, resolveConfig } from "../src/config.js";
+import { buildFrontmatter } from "../src/writer.js";
+import type { Metadata } from "../src/types.js";
 
 describe("parseFields", () => {
   it("parses simple key=value as string", () => {
@@ -54,5 +56,39 @@ describe("resolveConfig with fields", () => {
   it("defaults fields to empty object when not given", () => {
     const cfg = resolveConfig({ dest: "/tmp" }, undefined);
     expect(cfg.fields).toEqual({});
+  });
+});
+
+describe("buildFrontmatter with custom fields", () => {
+  const metadata: Metadata = {
+    title: "テスト記事",
+    source: "https://example.com",
+    author: [],
+    published: null,
+    created: "2026-06-01",
+    description: null,
+  };
+
+  it("appends custom fields after fixed schema", () => {
+    const fm = buildFrontmatter(metadata, ["clippings"], {
+      type: "clipping",
+      sentiment: "bullish",
+    });
+    expect(fm).toContain("type: clipping");
+    expect(fm).toContain("sentiment: bullish");
+  });
+
+  it("emits wikilink array values", () => {
+    const fm = buildFrontmatter(metadata, ["clippings"], {
+      ticker: ["[[AAPL]]"],
+    });
+    expect(fm).toContain("ticker:");
+    expect(fm).toContain("[[AAPL]]");
+  });
+
+  it("works when fields are omitted (backward compatible)", () => {
+    const fm = buildFrontmatter(metadata, ["clippings"]);
+    expect(fm).toMatch(/^---\n/);
+    expect(fm).toContain("title:");
   });
 });
