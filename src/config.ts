@@ -4,6 +4,37 @@ import { resolve } from "node:path";
 import yaml from "js-yaml";
 import type { ResolvedConfig, WaitUntilOption } from "./types.js";
 
+export const RESERVED_FRONTMATTER_KEYS = [
+  "title",
+  "source",
+  "author",
+  "published",
+  "created",
+  "description",
+  "tags",
+] as const;
+
+export function parseFields(raw: string[]): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const entry of raw) {
+    const eq = entry.indexOf("=");
+    if (eq === -1) {
+      throw new Error(`Invalid --field "${entry}": expected key=value`);
+    }
+    const key = entry.slice(0, eq).trim();
+    const rawValue = entry.slice(eq + 1);
+    if (
+      (RESERVED_FRONTMATTER_KEYS as readonly string[]).includes(key)
+    ) {
+      throw new Error(
+        `--field key "${key}" is reserved. Use the dedicated option instead (e.g. --title, --tag).`,
+      );
+    }
+    result[key] = yaml.load(rawValue);
+  }
+  return result;
+}
+
 const DEFAULT_TIMEOUT = 30;
 const DEFAULT_WAIT_UNTIL: WaitUntilOption = "networkidle";
 const REQUIRED_TAG = "clippings";
